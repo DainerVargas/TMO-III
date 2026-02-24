@@ -1,0 +1,132 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model auditlog {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  action    String
+  entity    String
+  entityId  String
+  oldData   String?  @db.Text
+  newData   String?  @db.Text
+  createdAt DateTime @default(now())
+  user      user     @relation(fields: [userId], references: [id], map: "AuditLog_userId_fkey")
+
+  @@index([userId], map: "AuditLog_userId_fkey")
+}
+
+model category {
+  id      String    @id
+  name    String
+  icon    String
+  product product[]
+}
+
+model globalsettings {
+  id          Int      @id @default(autoincrement())
+  key         String   @unique(map: "GlobalSettings_key_key")
+  value       String   @db.Text
+  description String?
+  updatedAt   DateTime
+}
+
+model order {
+  id         Int         @id @default(autoincrement())
+  userId     Int
+  total      Decimal     @db.Decimal(10, 2)
+  status     String      @default("PENDING")
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime
+  user       user        @relation(fields: [userId], references: [id], map: "Order_userId_fkey")
+  orderItems orderitem[]
+
+  @@index([userId], map: "Order_userId_fkey")
+}
+
+model orderitem {
+  id        Int     @id @default(autoincrement())
+  orderId   Int
+  productId Int
+  quantity  Int
+  price     Decimal @db.Decimal(10, 2)
+  order     order   @relation(fields: [orderId], references: [id], map: "OrderItem_orderId_fkey")
+  product   product @relation(fields: [productId], references: [id], map: "OrderItem_productId_fkey")
+
+  @@index([orderId], map: "OrderItem_orderId_fkey")
+  @@index([productId], map: "OrderItem_productId_fkey")
+}
+
+model product {
+  id            Int             @id @default(autoincrement())
+  name          String
+  sku           String          @unique(map: "Product_sku_key")
+  categoryId    String
+  price         Decimal         @db.Decimal(10, 2)
+  unit          String
+  stock         Int
+  stockStatus   String
+  image         String          @db.Text
+  description   String          @db.Text
+  deliveryDays  Int             @default(1)
+  brand         String
+  minOrder      Int             @default(1)
+  isRecurring   Boolean         @default(false)
+  tags          String
+  unitPrice     Decimal?        @db.Decimal(10, 2)
+  unitPriceUnit String?
+  isActive      Boolean         @default(true)
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime
+  orderitem     orderitem[]
+  category      category        @relation(fields: [categoryId], references: [id], map: "Product_categoryId_fkey")
+  stockmovement stockmovement[]
+
+  @@index([categoryId], map: "Product_categoryId_fkey")
+}
+
+model stockmovement {
+  id        Int      @id @default(autoincrement())
+  productId Int
+  quantity  Int
+  type      String
+  reason    String?
+  createdAt DateTime @default(now())
+  product   product  @relation(fields: [productId], references: [id], map: "StockMovement_productId_fkey")
+
+  @@index([productId], map: "StockMovement_productId_fkey")
+}
+
+model user {
+  id                Int        @id @default(autoincrement())
+  email             String     @unique(map: "User_email_key")
+  password          String
+  name              String
+  role              user_role  @default(USER)
+  phone             String?
+  ruc               String?
+  createdAt         DateTime   @default(now())
+  updatedAt         DateTime
+  companyName       String?
+  documentNumber    String?
+  documentType      String?
+  lastName          String?
+  isActive          Boolean    @default(true)
+  permissions       String?    @db.Text
+  shippingAddress   String?
+  shippingDistrict  String?
+  shippingReference String?
+  auditlog          auditlog[]
+  order             order[]
+}
+
+enum user_role {
+  USER
+  ADMIN
+  MANAGER
+}

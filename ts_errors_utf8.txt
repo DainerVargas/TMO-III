@@ -1,0 +1,7 @@
+﻿src/imports/Frame6.tsx(2,27): error TS2307: Cannot find module 'figma:asset/cab24fce2b6e2cb774fade4026a0050a77deda69.png' or its corresponding type declarations.
+src/imports/Frame6.tsx(3,28): error TS2307: Cannot find module 'figma:asset/c47505500302aaaec55ce6098c3c2bf4d695aefb.png' or its corresponding type declarations.
+src/imports/Frame6.tsx(4,28): error TS2307: Cannot find module 'figma:asset/450bc36bf5381eb59abb53606dc1368f8094f6f6.png' or its corresponding type declarations.
+src/imports/Frame6.tsx(5,28): error TS2307: Cannot find module 'figma:asset/b02a18bfbb394b2549aa1b1fd4d3fd027029d1ff.png' or its corresponding type declarations.
+src/imports/Frame6.tsx(6,28): error TS2307: Cannot find module 'figma:asset/00555de9bfe03665e28666571d10e97201966c06.png' or its corresponding type declarations.
+src/imports/Frame6.tsx(7,28): error TS2307: Cannot find module 'figma:asset/4ab0b9573fa2c7aeb5b8d748a440755df164229e.png' or its corresponding type declarations.
+src/imports/Frame6.tsx(8,28): error TS2307: Cannot find module 'figma:asset/2d143da03e7b0432522d69e8fd6a8e7a3038d0d5.png' or its corresponding type declarations.
