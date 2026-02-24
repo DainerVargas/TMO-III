@@ -5,7 +5,7 @@ const prisma = new PrismaClient();
 
 export const getAllSettings = async (req: Request, res: Response) => {
   try {
-    const settings = await prisma.globalSettings.findMany();
+    const settings = await prisma.globalsettings.findMany();
     res.json(settings);
   } catch (error) {
     res.status(500).json({ message: 'Error fetching settings', error });
@@ -15,7 +15,7 @@ export const getAllSettings = async (req: Request, res: Response) => {
 export const updateSetting = async (req: Request, res: Response) => {
   try {
     const { key, value, description } = req.body;
-    const setting = await prisma.globalSettings.upsert({
+    const setting = await prisma.globalsettings.upsert({
       where: { key },
       update: { value, description },
       create: { key, value, description }
@@ -28,7 +28,7 @@ export const updateSetting = async (req: Request, res: Response) => {
 
 export const getAuditLogs = async (req: Request, res: Response) => {
   try {
-    const logs = await prisma.auditLog.findMany({
+    const logs = await prisma.auditlog.findMany({
       include: {
         user: {
           select: { name: true, email: true }

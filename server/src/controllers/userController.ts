@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { PrismaClient } from '@prisma/client';
 import { logAudit } from '../utils/logger';
 import { triggerWebhook } from '../utils/webhooks';
+import bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
 
@@ -107,5 +108,80 @@ export const updateUserPermissions = async (req: Request, res: Response) => {
     });
   } catch (error) {
     res.status(500).json({ message: 'Error updating user permissions', error });
+  }
+};
+export const createUser = async (req: Request, res: Response) => {
+  try {
+    const adminId = (req as any).userId;
+    const { email, password, name, lastName, role, phone, documentType, documentNumber, companyName, permissions } = req.body;
+
+    const existingUser = await prisma.user.findUnique({ where: { email } });
+    if (existingUser) {
+      return res.status(400).json({ message: 'El correo electrónico ya está registrado' });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const permissionsString = Array.isArray(permissions) ? permissions.join(',') : permissions;
+
+    const user = await prisma.user.create({
+      data: {
+        email,
+        password: hashedPassword,
+        name,
+        lastName,
+        role: role || 'USER',
+        phone,
+        documentType,
+        documentNumber,
+        companyName,
+        permissions: permissionsString,
+        isActive: true
+      }
+    });
+
+    await logAudit(adminId, 'CREATE', 'User', user.id.toString(), null, { email, role, name });
+    res.status(201).json({ id: user.id, email: user.email, name: user.name });
+  } catch (error: any) {
+    console.error('Create user error:', error);
+    res.status(500).json({ message: 'Error al crear usuario', error: error.message });
+  }
+};
+
+export const updateUser = async (req: Request, res: Response) => {
+  try {
+    const adminId = (req as any).userId;
+    const { id } = req.params;
+    const userId = typeof id === 'string' ? parseInt(id) : parseInt(id[0]);
+    const { email, name, lastName, phone, documentType, documentNumber, companyName, password } = req.body;
+
+    const oldUser = await prisma.user.findUnique({ where: { id: userId } });
+    if (!oldUser) {
+      return res.status(404).json({ message: 'Usuario no encontrado' });
+    }
+
+    const data: any = {
+      email,
+      name,
+      lastName,
+      phone,
+      documentType,
+      documentNumber,
+      companyName
+    };
+
+    if (password && password.trim() !== '') {
+      data.password = await bcrypt.hash(password, 10);
+    }
+
+    const user = await prisma.user.update({
+      where: { id: userId },
+      data
+    });
+
+    await logAudit(adminId, 'UPDATE', 'User', userId.toString(), oldUser, user);
+    res.json({ id: user.id, email: user.email, name: user.name });
+  } catch (error: any) {
+    console.error('Update user error:', error);
+    res.status(500).json({ message: 'Error al actualizar usuario', error: error.message });
   }
 };

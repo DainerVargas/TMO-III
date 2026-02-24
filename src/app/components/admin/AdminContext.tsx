@@ -44,6 +44,7 @@ interface AdminContextType {
   updateOrderStatus: (id: string, status: Order["status"]) => void;
   refreshProducts: () => Promise<void>;
   refreshOrders: () => Promise<void>;
+  refreshCategories: () => Promise<void>;
   stats: {
     totalProducts: number;
     activeProducts: number;
@@ -115,6 +116,17 @@ export function AdminProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const refreshCategories = async () => {
+    try {
+      const data = await apiFetch('/categories');
+      if (data && data.length > 0) {
+        setCategories(data);
+      }
+    } catch (error) {
+      console.error("Error fetching categories", error);
+    }
+  };
+
   const refreshProducts = async () => {
     setIsLoading(true);
     try {
@@ -171,6 +183,7 @@ export function AdminProvider({ children }: { children: ReactNode }) {
   // On mount: always load public products so the storefront works for guests/regular users.
   useEffect(() => {
     refreshPublicProducts();
+    refreshCategories();
   }, []);
 
   // Re-fetch admin data whenever the user session changes (login/logout/role update).
@@ -180,6 +193,7 @@ export function AdminProvider({ children }: { children: ReactNode }) {
       refreshProducts();
       refreshOrders();
       refreshStats();
+      refreshCategories();
     }
   }, [user?.id, user?.role]);
 
@@ -295,6 +309,7 @@ export function AdminProvider({ children }: { children: ReactNode }) {
         updateOrderStatus,
         refreshProducts,
         refreshOrders,
+        refreshCategories,
         refreshStats,
         stats,
       }}

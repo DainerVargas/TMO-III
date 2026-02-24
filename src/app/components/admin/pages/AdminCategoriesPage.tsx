@@ -12,6 +12,7 @@ import {
 import { apiFetch } from "../../../utils/api";
 import { useConfirm } from "../ConfirmModal";
 import { toast } from "sonner";
+import { useAdmin } from "../AdminContext";
 
 interface Category {
   id: string;
@@ -20,6 +21,7 @@ interface Category {
 }
 
 export function AdminCategoriesPage() {
+  const { refreshCategories: refreshGlobalCategories } = useAdmin();
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -60,6 +62,7 @@ export function AdminCategoriesPage() {
         await apiFetch(`/categories/admin/${category.id}`, { method: "DELETE" });
         toast.success("Categoría eliminada");
         fetchCategories();
+        refreshGlobalCategories();
       } catch (error: any) {
         toast.error(error.message);
       }
@@ -78,27 +81,57 @@ export function AdminCategoriesPage() {
     setIsModalOpen(true);
   };
 
+  const handleNameChange = (name: string) => {
+    const newData: any = { ...formData, name };
+    // Auto-generate slug only if we are creating and slug hasn't been manually touched or is empty
+    if (!editingCategory) {
+      const suggestedId = name.toLowerCase()
+        .trim()
+        .replace(/[^\w\s-]/g, '')
+        .replace(/[\s_-]+/g, '-')
+        .replace(/^-+|-+$/g, '');
+      newData.id = suggestedId;
+    }
+    setFormData(newData);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Final normalization
+    const slug = formData.id.toLowerCase().trim().replace(/[^\w\s-]/g, '').replace(/[\s_-]+/g, '-');
+    const name = formData.name.trim();
+
+    if (!slug || !name) {
+      toast.error("El ID (Slug) y el Nombre son obligatorios");
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       if (editingCategory) {
         await apiFetch(`/categories/admin/${editingCategory.id}`, {
           method: "PATCH",
-          body: JSON.stringify({ name: formData.name, icon: formData.icon })
+          body: JSON.stringify({ name, icon: formData.icon || "Package" })
         });
         toast.success("Categoría actualizada");
       } else {
         await apiFetch("/categories/admin", {
           method: "POST",
-          body: JSON.stringify(formData)
+          body: JSON.stringify({
+            id: slug,
+            name: name,
+            icon: "Package"
+          })
         });
         toast.success("Categoría creada");
       }
       setIsModalOpen(false);
       fetchCategories();
+      refreshGlobalCategories();
     } catch (error: any) {
-      toast.error(error.message);
+      console.error("Error submitting category:", error);
+      toast.error(error.message || "Error al procesar la categoría");
     } finally {
       setIsSubmitting(false);
     }
@@ -197,6 +230,17 @@ export function AdminCategoriesPage() {
             </div>
             <form onSubmit={handleSubmit} className="p-6 space-y-4">
               <div>
+                <label className="block text-sm font-bold text-muted-foreground mb-1.5 ml-1">Nombre</label>
+                <input 
+                  type="text" 
+                  value={formData.name}
+                  onChange={(e) => handleNameChange(e.target.value)}
+                  placeholder="ej: Equipos de Protección"
+                  className="w-full px-4 py-2.5 rounded-xl border border-border focus:border-[#0a4d8c] focus:ring-4 focus:ring-[#0a4d8c]/5 outline-none transition-all"
+                  required
+                />
+              </div>
+              <div>
                 <label className="block text-sm font-bold text-muted-foreground mb-1.5 ml-1">ID (Slug)</label>
                 <input 
                   type="text" 
@@ -207,17 +251,11 @@ export function AdminCategoriesPage() {
                   className="w-full px-4 py-2.5 rounded-xl border border-border focus:border-[#0a4d8c] focus:ring-4 focus:ring-[#0a4d8c]/5 outline-none transition-all disabled:bg-slate-50"
                   required
                 />
-              </div>
-              <div>
-                <label className="block text-sm font-bold text-muted-foreground mb-1.5 ml-1">Nombre</label>
-                <input 
-                  type="text" 
-                  value={formData.name}
-                  onChange={(e) => setFormData({...formData, name: e.target.value})}
-                  placeholder="ej: Equipos de Protección"
-                  className="w-full px-4 py-2.5 rounded-xl border border-border focus:border-[#0a4d8c] focus:ring-4 focus:ring-[#0a4d8c]/5 outline-none transition-all"
-                  required
-                />
+                {!editingCategory && (
+                  <p className="text-[10px] text-muted-foreground mt-1 ml-1">
+                    Se genera automáticamente, pero puedes editarlo antes de guardar.
+                  </p>
+                )}
               </div>
               <div className="flex gap-3 mt-8">
                 <button 

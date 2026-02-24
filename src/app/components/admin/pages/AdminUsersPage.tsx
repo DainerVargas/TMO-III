@@ -11,10 +11,13 @@ import {
   Mail,
   FileText,
   Lock,
-  X
+  X,
+  Plus,
+  Edit2
 } from "lucide-react";
 import { apiFetch } from "../../../utils/api";
 import { toast } from "sonner";
+import { AdminUserModal } from "../AdminUserModal";
 
 interface ManagedUser {
   id: number;
@@ -31,17 +34,6 @@ interface ManagedUser {
   createdAt: string;
 }
 
-const AVAILABLE_PERMISSIONS = [
-  { id: 'dashboard', label: 'Dashboard' },
-  { id: 'categories', label: 'Categorías' },
-  { id: 'products', label: 'Productos' },
-  { id: 'orders', label: 'Pedidos' },
-  { id: 'users', label: 'Usuarios' },
-  { id: 'inventory', label: 'Inventario' },
-  { id: 'audit', label: 'Auditoría' },
-  { id: 'settings', label: 'Configuración' },
-];
-
 export function AdminUsersPage() {
   const [users, setUsers] = useState<ManagedUser[]>([]);
   const [loading, setLoading] = useState(true);
@@ -49,8 +41,7 @@ export function AdminUsersPage() {
   const [updatingId, setUpdatingId] = useState<number | null>(null);
   
   const [selectedUser, setSelectedUser] = useState<ManagedUser | null>(null);
-  const [isPermissionModalOpen, setIsPermissionModalOpen] = useState(false);
-  const [tempPermissions, setTempPermissions] = useState<string[]>([]);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
     fetchUsers();
@@ -105,34 +96,14 @@ export function AdminUsersPage() {
     }
   };
 
-  const handleUpdatePermissions = async () => {
-    if (!selectedUser) return;
-    setUpdatingId(selectedUser.id);
-    try {
-      await apiFetch(`/users/admin/${selectedUser.id}/permissions`, {
-        method: "PATCH",
-        body: JSON.stringify({ permissions: tempPermissions })
-      });
-      toast.success("Permisos actualizados");
-      setIsPermissionModalOpen(false);
-      fetchUsers();
-    } catch (error: any) {
-      toast.error(error.message);
-    } finally {
-      setUpdatingId(null);
-    }
-  };
-
-  const openPermissionModal = (user: ManagedUser) => {
+  const handleEdit = (user: ManagedUser) => {
     setSelectedUser(user);
-    setTempPermissions(user.permissions);
-    setIsPermissionModalOpen(true);
+    setIsModalOpen(true);
   };
 
-  const togglePermission = (permId: string) => {
-    setTempPermissions(prev => 
-      prev.includes(permId) ? prev.filter(p => p !== permId) : [...prev, permId]
-    );
+  const handleCreate = () => {
+    setSelectedUser(null);
+    setIsModalOpen(true);
   };
 
   const filteredUsers = users.filter(u => 
@@ -151,6 +122,13 @@ export function AdminUsersPage() {
             Administra los roles, permisos y acceso de tus colaboradores.
           </p>
         </div>
+        <button 
+          onClick={handleCreate}
+          className="flex items-center justify-center gap-2 bg-[#0a4d8c] text-white px-5 py-2.5 rounded-xl font-bold text-[14px] shadow-lg shadow-blue-500/20 hover:shadow-blue-500/40 active:scale-95 transition-all"
+        >
+          <Plus className="w-5 h-5" />
+          Nuevo Usuario
+        </button>
       </div>
 
       <div className="bg-white p-4 rounded-2xl border border-border shadow-sm">
@@ -201,7 +179,10 @@ export function AdminUsersPage() {
                       <select 
                         value={u.role}
                         onChange={(e) => handleRoleChange(u.id, e.target.value)}
-                        className="bg-[#f5f7fa] border border-transparent rounded-lg px-2 py-1 text-[12px] font-bold outline-none focus:bg-white focus:border-[#0a4d8c] transition-all"
+                        className={`border border-transparent rounded-lg px-2 py-1 text-[11px] font-black outline-none transition-all ${
+                          u.role === 'ADMIN' ? 'bg-purple-100 text-purple-700' : 
+                          u.role === 'MANAGER' ? 'bg-blue-100 text-blue-700' : 'bg-slate-100 text-slate-700'
+                        }`}
                       >
                         <option value="USER">USUARIO</option>
                         <option value="MANAGER">GESTOR</option>
@@ -216,23 +197,22 @@ export function AdminUsersPage() {
                       </span>
                     </td>
                     <td className="px-6 py-4 text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        {(u.role === 'ADMIN' || u.role === 'MANAGER') && (
-                          <button 
-                            onClick={() => openPermissionModal(u)}
-                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-bold text-[#0a4d8c] hover:bg-[#0a4d8c]/5 transition-all"
-                          >
-                            <Lock className="w-3.5 h-3.5" />
-                            Permisos
-                          </button>
-                        )}
+                      <div className="flex items-center justify-end gap-1">
+                        <button 
+                          onClick={() => handleEdit(u)}
+                          className="p-2 hover:bg-blue-50 text-blue-600 rounded-lg transition-all"
+                          title="Editar"
+                        >
+                          <Edit2 className="w-4 h-4" />
+                        </button>
                         <button 
                           onClick={() => handleStatusToggle(u.id, u.isActive)}
-                          className={`text-[12px] font-bold px-3 py-1.5 rounded-lg transition-all ${
-                            u.isActive ? "text-red-600 hover:bg-red-50" : "text-emerald-600 hover:bg-emerald-50"
+                          className={`p-2 rounded-lg transition-all ${
+                            u.isActive ? "hover:bg-red-50 text-red-600" : "hover:bg-emerald-50 text-emerald-600"
                           }`}
+                          title={u.isActive ? "Desactivar" : "Activar"}
                         >
-                          {u.isActive ? "Desactivar" : "Activar"}
+                          {u.isActive ? <XCircle className="w-4 h-4" /> : <CheckCircle2 className="w-4 h-4" />}
                         </button>
                       </div>
                     </td>
@@ -244,79 +224,12 @@ export function AdminUsersPage() {
         )}
       </div>
 
-      {/* Permissions Modal */}
-      {isPermissionModalOpen && selectedUser && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-white rounded-3xl w-full max-w-md shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
-            <div className="p-6 border-b border-border flex items-center justify-between bg-[#f8f9fb]">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-[#0a4d8c]/10 text-[#0a4d8c] flex items-center justify-center">
-                  <Shield className="w-5 h-5" />
-                </div>
-                <div>
-                  <h3 className="font-bold text-foreground" style={{ fontFamily: "Montserrat, sans-serif" }}>Permisos de Acceso</h3>
-                  <p className="text-[12px] text-muted-foreground font-medium">{selectedUser.name} {selectedUser.lastName}</p>
-                </div>
-              </div>
-              <button 
-                onClick={() => setIsPermissionModalOpen(false)}
-                className="p-2 hover:bg-muted rounded-full transition-colors"
-              >
-                <X className="w-5 h-5 text-muted-foreground" />
-              </button>
-            </div>
-            
-            <div className="p-6 space-y-4">
-              <p className="text-[13px] text-muted-foreground mb-2">
-                Selecciona las áreas a las que este colaborador tendrá acceso total:
-              </p>
-              <div className="grid grid-cols-2 gap-3">
-                {AVAILABLE_PERMISSIONS.map((perm) => (
-                  <button
-                    key={perm.id}
-                    onClick={() => togglePermission(perm.id)}
-                    className={`flex items-center gap-3 p-3 rounded-2xl border transition-all text-left ${
-                      tempPermissions.includes(perm.id)
-                        ? "bg-[#f0f7ff] border-[#0a4d8c] ring-2 ring-[#0a4d8c]/10"
-                        : "bg-white border-border hover:bg-[#f8f9fb]"
-                    }`}
-                  >
-                    <div className={`w-5 h-5 rounded flex items-center justify-center border transition-colors ${
-                      tempPermissions.includes(perm.id)
-                        ? "bg-[#0a4d8c] border-[#0a4d8c]"
-                        : "bg-white border-muted-foreground/30"
-                    }`}>
-                      {tempPermissions.includes(perm.id) && <CheckCircle2 className="w-3.5 h-3.5 text-white" />}
-                    </div>
-                    <span className={`text-[13px] font-semibold ${
-                      tempPermissions.includes(perm.id) ? "text-[#0a4d8c]" : "text-foreground"
-                    }`}>
-                      {perm.label}
-                    </span>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div className="p-6 bg-[#f8f9fb] border-t border-border flex gap-3">
-              <button
-                onClick={() => setIsPermissionModalOpen(false)}
-                className="flex-1 py-3 rounded-xl text-[14px] font-bold text-foreground border border-border bg-white hover:bg-[#f5f7fa] transition-all"
-              >
-                Cancelar
-              </button>
-              <button
-                onClick={handleUpdatePermissions}
-                disabled={updatingId === selectedUser.id}
-                className="flex-1 py-3 rounded-xl text-[14px] font-bold text-white shadow-lg shadow-[#0a4d8c]/20 hover:shadow-[#0a4d8c]/40 active:scale-95 transition-all"
-                style={{ background: "linear-gradient(135deg, #0a4d8c 0%, #00bcd4 100%)" }}
-              >
-                {updatingId === selectedUser.id ? <Loader2 className="w-4 h-4 animate-spin mx-auto" /> : "Guardar Cambios"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <AdminUserModal 
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onSave={fetchUsers}
+        user={selectedUser}
+      />
     </div>
   );
 }

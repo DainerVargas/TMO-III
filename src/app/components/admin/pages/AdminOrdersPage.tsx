@@ -34,6 +34,9 @@ export function AdminOrdersPage() {
   // State for Details Modal
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
+  
+  // State for popover menu
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
 
   // Filter logic
   const filteredOrders = orders.filter(o => {
@@ -176,32 +179,75 @@ export function AdminOrdersPage() {
                       >
                         <Eye className="w-4 h-4" />
                       </button>
-                      <div className="relative group/menu">
-                        <button className="p-2 hover:bg-muted text-muted-foreground rounded-lg transition-colors">
+                      <div className="relative">
+                        <button 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setOpenMenuId(openMenuId === order.id ? null : order.id);
+                          }}
+                          className={`p-2 rounded-lg transition-colors ${openMenuId === order.id ? "bg-[#0a4d8c]/10 text-[#0a4d8c]" : "hover:bg-muted text-muted-foreground"}`}
+                        >
                           <MoreVertical className="w-4 h-4" />
                         </button>
-                        <div className="absolute right-0 top-full mt-1 w-48 bg-white border border-border rounded-xl shadow-xl hidden group-hover/menu:block z-10 animate-in fade-in zoom-in-95 duration-200">
-                          <div className="p-1.5">
-                            <button 
-                              onClick={() => updateOrderStatus(order.id, "confirmed")}
-                              className="w-full flex items-center gap-2.5 px-3 py-2 text-[13px] text-foreground hover:bg-emerald-50 hover:text-emerald-700 rounded-lg transition-colors"
-                            >
-                              <CheckCircle2 className="w-4 h-4" /> Marcar Confirmado
-                            </button>
-                            <button 
-                              onClick={() => updateOrderStatus(order.id, "shipped")}
-                              className="w-full flex items-center gap-2.5 px-3 py-2 text-[13px] text-foreground hover:bg-blue-50 hover:text-blue-700 rounded-lg transition-colors"
-                            >
-                              <Truck className="w-4 h-4" /> Marcar Enviado
-                            </button>
-                            <button 
-                              onClick={() => updateOrderStatus(order.id, "cancelled")}
-                              className="w-full flex items-center gap-2.5 px-3 py-2 text-[13px] text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                            >
-                              <XCircle className="w-4 h-4" /> Cancelar Pedido
-                            </button>
-                          </div>
-                        </div>
+                        
+                        {openMenuId === order.id && (
+                          <>
+                            <div 
+                              className="fixed inset-0 z-10" 
+                              onClick={() => setOpenMenuId(null)}
+                            />
+                            <div className="absolute right-0 top-full mt-1 w-48 bg-white border border-border rounded-xl shadow-xl z-20 animate-in fade-in zoom-in-95 duration-200">
+                              <div className="p-1.5">
+                                {order.status === "confirmed" ? (
+                                  <div className="px-3 py-2 text-[12px] text-muted-foreground italic text-center">
+                                    Pedido ya confirmado (Finalizado)
+                                  </div>
+                                ) : order.status === "cancelled" ? (
+                                  <div className="px-3 py-2 text-[12px] text-muted-foreground italic text-center">
+                                    Pedido cancelado
+                                  </div>
+                                ) : order.status === "shipped" ? (
+                                  <button 
+                                    onClick={() => {
+                                      if (window.confirm("¿Está seguro de que desea confirmar la RECEPCIÓN de este pedido?")) {
+                                        updateOrderStatus(order.id, "confirmed");
+                                        setOpenMenuId(null);
+                                      }
+                                    }}
+                                    className="w-full flex items-center gap-2.5 px-3 py-2 text-[13px] text-foreground hover:bg-emerald-50 hover:text-emerald-700 rounded-lg transition-colors"
+                                  >
+                                    <CheckCircle2 className="w-4 h-4" /> Marcar Confirmado
+                                  </button>
+                                ) : (
+                                  <>
+                                    <button 
+                                      onClick={() => {
+                                        if (window.confirm("¿Está seguro de que desea marcar este pedido como ENVIADO?")) {
+                                          updateOrderStatus(order.id, "shipped");
+                                          setOpenMenuId(null);
+                                        }
+                                      }}
+                                      className="w-full flex items-center gap-2.5 px-3 py-2 text-[13px] text-foreground hover:bg-blue-50 hover:text-blue-700 rounded-lg transition-colors"
+                                    >
+                                      <Truck className="w-4 h-4" /> Marcar Enviado
+                                    </button>
+                                    <button 
+                                      onClick={() => {
+                                        if (window.confirm("¿Está realmente seguro de que desea CANCELAR este pedido?")) {
+                                          updateOrderStatus(order.id, "cancelled");
+                                          setOpenMenuId(null);
+                                        }
+                                      }}
+                                      className="w-full flex items-center gap-2.5 px-3 py-2 text-[13px] text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                    >
+                                      <XCircle className="w-4 h-4" /> Cancelar Pedido
+                                    </button>
+                                  </>
+                                )}
+                              </div>
+                            </div>
+                          </>
+                        )}
                       </div>
                     </div>
                   </td>

@@ -1,11 +1,13 @@
 {
-  "name": "@figma/my-make-file",
+  "name": "ecommerce-beit-peru",
   "private": true,
   "version": "0.0.1",
   "type": "module",
   "scripts": {
     "build": "vite build",
-    "dev": "vite"
+    "dev": "concurrently \"npm run dev:client\" \"npm run dev:server\"",
+    "dev:client": "vite",
+    "dev:server": "cd server && npm run dev"
   },
   "dependencies": {
     "@emotion/react": "11.14.0",
@@ -69,6 +71,7 @@
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "4.7.0",
+    "concurrently": "^9.2.1",
     "tailwindcss": "4.1.12",
     "typescript": "^5.9.3",
     "vite": "6.3.5"

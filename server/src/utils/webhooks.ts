@@ -5,7 +5,7 @@ const prisma = new PrismaClient();
 
 export const triggerWebhook = async (action: string, entity: string, data: any) => {
   try {
-    const webhookSetting = await prisma.globalSettings.findUnique({
+    const webhookSetting = await prisma.globalsettings.findUnique({
       where: { key: 'N8N_WEBHOOK_URL' }
     });
 

@@ -4,7 +4,7 @@ const prisma = new PrismaClient();
 
 export const logAudit = async (userId: number, action: string, entity: string, entityId: string, oldData?: any, newData?: any) => {
   try {
-    await prisma.auditLog.create({
+    await prisma.auditlog.create({
       data: {
         userId,
         action,

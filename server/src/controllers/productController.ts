@@ -45,18 +45,29 @@ export const createProduct = async (req: Request, res: Response) => {
   try {
     const userId = (req as any).userId;
     // Strip out fields that shouldn't be in the creation data
-    const { id, category, stockMovements, orderItems, ...data } = req.body;
+    const { id, category, stockmovement, orderitem, ...data } = req.body;
     
+    // Explicitly check for categoryId
+    if (!data.categoryId) {
+      return res.status(400).json({ message: 'La categoría es obligatoria' });
+    }
+
     const product = await prisma.product.create({
-      data: data,
+      data: {
+        ...data,
+      },
       include: { category: true }
     });
     await logAudit(userId, 'CREATE', 'Product', product.id.toString(), null, product);
     await triggerWebhook('CREATE', 'Product', product);
     res.status(201).json(product);
-  } catch (error) {
+  } catch (error: any) {
     console.error('Create product error:', error);
-    res.status(500).json({ message: 'Error creating product', error });
+    res.status(500).json({ 
+      message: 'Error al crear el producto. Verifique los campos obligatorios.', 
+      error: error.message,
+      code: error.code 
+    });
   }
 };
 
@@ -67,7 +78,7 @@ export const updateProduct = async (req: Request, res: Response) => {
     const productId = parseInt(id as string);
     
     // Strip out fields that shouldn't be in the update data
-    const { id: bodyId, category, stockMovements, orderItems, createdAt, updatedAt, ...updateData } = req.body;
+    const { id: bodyId, category, stockmovement, orderitem, createdAt, updatedAt, ...updateData } = req.body;
 
     const oldProduct = await prisma.product.findUnique({ where: { id: productId } });
     if (!oldProduct) {
@@ -96,7 +107,7 @@ export const deleteProduct = async (req: Request, res: Response) => {
 
     const product = await prisma.product.findUnique({
       where: { id: productId },
-      include: { orderItems: true }
+      include: { orderitem: true }
     });
 
     if (!product) {
@@ -104,7 +115,7 @@ export const deleteProduct = async (req: Request, res: Response) => {
     }
 
     // If product has been ordered, we only do a soft delete to keep history
-    if (product.orderItems.length > 0) {
+    if (product.orderitem.length > 0) {
       await prisma.product.update({
         where: { id: productId },
         data: { isActive: false }
@@ -115,7 +126,7 @@ export const deleteProduct = async (req: Request, res: Response) => {
 
     // Otherwise, we can do a hard delete
     // First delete related stock movements
-    await prisma.stockMovement.deleteMany({
+    await prisma.stockmovement.deleteMany({
       where: { productId }
     });
 
@@ -154,7 +165,7 @@ export const updateStock = async (req: Request, res: Response) => {
         where: { id: productId },
         data: { stock: newStock, stockStatus }
       }),
-      prisma.stockMovement.create({
+      prisma.stockmovement.create({
         data: {
           productId,
           quantity,
@@ -178,7 +189,7 @@ export const updateStock = async (req: Request, res: Response) => {
 
 export const getStockMovements = async (req: Request, res: Response) => {
   try {
-    const movements = await prisma.stockMovement.findMany({
+    const movements = await prisma.stockmovement.findMany({
       include: { product: { select: { name: true, sku: true } } },
       orderBy: { createdAt: 'desc' },
       take: 100

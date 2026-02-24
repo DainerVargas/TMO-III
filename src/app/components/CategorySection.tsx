@@ -1,10 +1,16 @@
-import { PenLine, Package, Sparkles } from "lucide-react";
+import { PenLine, Package, Sparkles, ClipboardList, Coffee, Shield, Monitor, Wrench, Truck } from "lucide-react";
 import { useAdmin } from "./admin/AdminContext";
 
 const iconMap: Record<string, React.ReactNode> = {
   PenLine: <PenLine className="w-6 h-6" />,
   Package: <Package className="w-6 h-6" />,
   Sparkles: <Sparkles className="w-6 h-6" />,
+  ClipboardList: <ClipboardList className="w-6 h-6" />,
+  Coffee: <Coffee className="w-6 h-6" />,
+  Shield: <Shield className="w-6 h-6" />,
+  Monitor: <Monitor className="w-6 h-6" />,
+  Wrench: <Wrench className="w-6 h-6" />,
+  Truck: <Truck className="w-6 h-6" />,
 };
 
 interface CategorySectionProps {

@@ -18,14 +18,24 @@ export const createCategory = async (req: Request, res: Response) => {
   try {
     const userId = (req as any).userId;
     const { id, name, icon } = req.body;
+    
+    if (!id || !name) {
+      return res.status(400).json({ message: 'El ID y el Nombre son obligatorios' });
+    }
+
     const category = await prisma.category.create({
-      data: { id, name, icon }
+      data: { id, name, icon: icon || 'Package' }
     });
+    
     await logAudit(userId, 'CREATE', 'Category', id, null, category);
     await triggerWebhook('CREATE', 'Category', category);
     res.status(201).json(category);
-  } catch (error) {
-    res.status(500).json({ message: 'Error creating category', error });
+  } catch (error: any) {
+    console.error('CRITICAL Error in createCategory:', error);
+    res.status(500).json({ 
+      message: 'Error al crear la categoría: ' + (error.code === 'P2002' ? 'El ID ya existe' : error.message),
+      error 
+    });
   }
 };
 
