@@ -4,6 +4,10 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.prisma = void 0;
+// @ts-ignore
+process.env.UNDICI_NO_WASM = '1';
+// @ts-ignore
+process.env.NODE_NO_HTTP2 = '1';
 const express_1 = __importDefault(require("express"));
 const cors_1 = __importDefault(require("cors"));
 const authRoutes_1 = __importDefault(require("./routes/authRoutes"));

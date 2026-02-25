@@ -1,0 +1,112 @@
+
+   INFO  Seeding database.  
+
+
+   Illuminate\Database\QueryException 
+
+  SQLSTATE[21S01]: Insert value list does not match column list: 1136 Column count doesn't match value count at row 3 (Connection: mysql, SQL: insert into `user` (`companyName`, `createdAt`, `documentNumber`, `documentType`, `email`, `id`, `isActive`, `lastName`, `name`, `password`, `phone`, `role`, `ruc`, `updatedAt`) values (?, 2026-02-23 16:59:09.134, 9876543210, ?, admin@tmo.com.pe, 1, 1, TMO, Admin , $2y$12$.SpTG6FcaiMujPgN/Fk8lu6Q3IA2SqzLUnYRJL59ya2xS8guz01M., 132465798, ADMIN, ?, 2026-02-23 19:23:45.292), (Distribuidora Lima, 2026-02-23 17:10:37.903, 20123456789, RUC, cliente@ejemplo.com, 2, 1, Cliente, Juan, $2y$12$.SpTG6FcaiMujPgN/Fk8lu6Q3IA2SqzLUnYRJL59ya2xS8guz01M., 987654321, USER, ?, 2026-02-23 19:17:05.390), (, 2026-02-23 21:58:39.671, 1006713929, DNI, dainer2607@gmail.com, 3, 1, Vargas, Dainer, $2y$10$a1YMKmGt0p5S/0AomXGsTuuMssezjTnVGxsJ0MlGjROO7QnM7b3qm, products,dashboard,categories,orders, 3242406307, MANAGER, ?, 2026-02-23 22:41:07.989))
+
+  at vendor\laravel\framework\src\Illuminate\Database\Connection.php:825
+    821▕                     $this->getName(), $query, $this->prepareBindings($bindings), $e
+    822▕                 );
+    823▕             }
+    824▕ 
+  ➜ 825▕             throw new QueryException(
+    826▕                 $this->getName(), $query, $this->prepareBindings($bindings), $e
+    827▕             );
+    828▕         }
+    829▕     }
+
+  1   vendor\laravel\framework\src\Illuminate\Database\MySqlConnection.php:47
+      PDOException::("SQLSTATE[21S01]: Insert value list does not match column list: 1136 Column count doesn't match value count at row 3")
+
+  2   vendor\laravel\framework\src\Illuminate\Database\MySqlConnection.php:47
+      PDO::prepare("insert into `user` (`companyName`, `createdAt`, `documentNumber`, `documentType`, `email`, `id`, `isActive`, `lastName`, `name`, `password`, `phone`, `role`, `ruc`, `updatedAt`) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?), (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?), (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
+
+  3   vendor\laravel\framework\src\Illuminate\Database\Connection.php:812
+      Illuminate\Database\MySqlConnection::Illuminate\Database\{closure}("insert into `user` (`companyName`, `createdAt`, `documentNumber`, `documentType`, `email`, `id`, `isActive`, `lastName`, `name`, `password`, `phone`, `role`, `ruc`, `updatedAt`) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?), (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?), (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
+
+  4   vendor\laravel\framework\src\Illuminate\Database\Connection.php:779
+      Illuminate\Database\Connection::runQueryCallback("insert into `user` (`companyName`, `createdAt`, `documentNumber`, `documentType`, `email`, `id`, `isActive`, `lastName`, `name`, `password`, `phone`, `role`, `ruc`, `updatedAt`) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?), (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?), (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", Object(Closure))
+
+  5   vendor\laravel\framework\src\Illuminate\Database\MySqlConnection.php:42
+      Illuminate\Database\Connection::run("insert into `user` (`companyName`, `createdAt`, `documentNumber`, `documentType`, `email`, `id`, `isActive`, `lastName`, `name`, `password`, `phone`, `role`, `ruc`, `updatedAt`) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?), (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?), (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", Object(Closure))
+
+  6   vendor\laravel\framework\src\Illuminate\Database\Query\Builder.php:3717
+      Illuminate\Database\MySqlConnection::insert("insert into `user` (`companyName`, `createdAt`, `documentNumber`, `documentType`, `email`, `id`, `isActive`, `lastName`, `name`, `password`, `phone`, `role`, `ruc`, `updatedAt`) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?), (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?), (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
+
+  7   database\seeders\InitialDataSeeder.php:37
+      Illuminate\Database\Query\Builder::insert()
+
+  8   vendor\laravel\framework\src\Illuminate\Container\BoundMethod.php:36
+      Database\Seeders\InitialDataSeeder::run()
+
+  9   vendor\laravel\framework\src\Illuminate\Container\Util.php:43
+      Illuminate\Container\BoundMethod::Illuminate\Container\{closure}()
+
+  10  vendor\laravel\framework\src\Illuminate\Container\BoundMethod.php:95
+      Illuminate\Container\Util::unwrapIfClosure(Object(Closure))
+
+  11  vendor\laravel\framework\src\Illuminate\Container\BoundMethod.php:35
+      Illuminate\Container\BoundMethod::callBoundMethod(Object(Illuminate\Foundation\Application), Object(Closure))
+
+  12  vendor\laravel\framework\src\Illuminate\Container\Container.php:696
+      Illuminate\Container\BoundMethod::call(Object(Illuminate\Foundation\Application), [])
+
+  13  vendor\laravel\framework\src\Illuminate\Database\Seeder.php:188
+      Illuminate\Container\Container::call([])
+
+  14  vendor\laravel\framework\src\Illuminate\Database\Seeder.php:197
+      Illuminate\Database\Seeder::Illuminate\Database\{closure}()
+
+  15  vendor\laravel\framework\src\Illuminate\Database\Console\Seeds\SeedCommand.php:70
+      Illuminate\Database\Seeder::__invoke()
+
+  16  vendor\laravel\framework\src\Illuminate\Database\Eloquent\Concerns\GuardsAttributes.php:155
+      Illuminate\Database\Console\Seeds\SeedCommand::Illuminate\Database\Console\Seeds\{closure}()
+
+  17  vendor\laravel\framework\src\Illuminate\Database\Console\Seeds\SeedCommand.php:69
+      Illuminate\Database\Eloquent\Model::unguarded(Object(Closure))
+
+  18  vendor\laravel\framework\src\Illuminate\Container\BoundMethod.php:36
+      Illuminate\Database\Console\Seeds\SeedCommand::handle()
+
+  19  vendor\laravel\framework\src\Illuminate\Container\Util.php:43
+      Illuminate\Container\BoundMethod::Illuminate\Container\{closure}()
+
+  20  vendor\laravel\framework\src\Illuminate\Container\BoundMethod.php:95
+      Illuminate\Container\Util::unwrapIfClosure(Object(Closure))
+
+  21  vendor\laravel\framework\src\Illuminate\Container\BoundMethod.php:35
+      Illuminate\Container\BoundMethod::callBoundMethod(Object(Illuminate\Foundation\Application), Object(Closure))
+
+  22  vendor\laravel\framework\src\Illuminate\Container\Container.php:696
+      Illuminate\Container\BoundMethod::call(Object(Illuminate\Foundation\Application), [])
+
+  23  vendor\laravel\framework\src\Illuminate\Console\Command.php:213
+      Illuminate\Container\Container::call()
+
+  24  vendor\symfony\console\Command\Command.php:341
+      Illuminate\Console\Command::execute(Object(Symfony\Component\Console\Input\ArgvInput), Object(Illuminate\Console\OutputStyle))
+
+  25  vendor\laravel\framework\src\Illuminate\Console\Command.php:182
+      Symfony\Component\Console\Command\Command::run(Object(Symfony\Component\Console\Input\ArgvInput), Object(Illuminate\Console\OutputStyle))
+
+  26  vendor\symfony\console\Application.php:1102
+      Illuminate\Console\Command::run(Object(Symfony\Component\Console\Input\ArgvInput), Object(Symfony\Component\Console\Output\ConsoleOutput))
+
+  27  vendor\symfony\console\Application.php:356
+      Symfony\Component\Console\Application::doRunCommand(Object(Illuminate\Database\Console\Seeds\SeedCommand), Object(Symfony\Component\Console\Input\ArgvInput), Object(Symfony\Component\Console\Output\ConsoleOutput))
+
+  28  vendor\symfony\console\Application.php:195
+      Symfony\Component\Console\Application::doRun(Object(Symfony\Component\Console\Input\ArgvInput), Object(Symfony\Component\Console\Output\ConsoleOutput))
+
+  29  vendor\laravel\framework\src\Illuminate\Foundation\Console\Kernel.php:198
+      Symfony\Component\Console\Application::run(Object(Symfony\Component\Console\Input\ArgvInput), Object(Symfony\Component\Console\Output\ConsoleOutput))
+
+  30  vendor\laravel\framework\src\Illuminate\Foundation\Application.php:1235
+      Illuminate\Foundation\Console\Kernel::handle(Object(Symfony\Component\Console\Input\ArgvInput), Object(Symfony\Component\Console\Output\ConsoleOutput))
+
+  31  artisan:13
+      Illuminate\Foundation\Application::handleCommand(Object(Symfony\Component\Console\Input\ArgvInput))
+

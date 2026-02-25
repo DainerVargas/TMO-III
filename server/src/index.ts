@@ -1,3 +1,8 @@
+// @ts-ignore
+process.env.UNDICI_NO_WASM = '1';
+// @ts-ignore
+process.env.NODE_NO_HTTP2 = '1';
+
 import express from 'express';
 import cors from 'cors';
 import authRoutes from './routes/authRoutes';
