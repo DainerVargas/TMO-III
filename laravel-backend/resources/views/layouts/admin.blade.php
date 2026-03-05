@@ -12,6 +12,7 @@
     <link
         href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Montserrat:wght@600;700&display=swap"
         rel="stylesheet">
+    <link rel="stylesheet" href="{{ asset('build/assets/app.css') }}">
 
     <!-- Styles / Scripts -->
     @vite(['resources/css/app.css', 'resources/js/app.js'])
@@ -110,7 +111,7 @@
         <div class="flex-1 flex flex-col h-full overflow-hidden">
             {{-- Admin Header --}}
             <header
-                class="h-20 bg-white border-b border-[#f1f5f9] flex items-center justify-between px-8 shrink-0 z-10 transition-all">
+                class="h-20 bg-white border-b border-[#f1f5f9] flex items-center justify-between px-8 shrink-0 z-30 transition-all">
                 <div class="flex items-center gap-6 flex-1">
                     <button class="lg:hidden p-2 hover:bg-slate-50 rounded-xl text-slate-400 transition-colors"
                         @click="sidebarOpen = true">

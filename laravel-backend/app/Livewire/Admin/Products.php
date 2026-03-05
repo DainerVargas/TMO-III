@@ -21,9 +21,11 @@ class Products extends Component
     public $isModalOpen = false;
     public $editingProduct = null;
 
-    // Form inputs
     public $name, $sku, $brand, $price, $unit, $stock, $image, $categoryId, $isActive = true, $deliveryDays = 1, $description = '', $tags = '';
+    public $unitPrice, $unitPriceUnit, $technicalSheet;
     public $newImage;
+    public $newGallery = [];
+    public $existingGallery = [];
 
     protected $queryString = ['search', 'category', 'stockStatus', 'activeFilter'];
 
@@ -86,14 +88,21 @@ class Products extends Component
             $this->deliveryDays = $product->deliveryDays;
             $this->image = $product->image;
             $this->description = $product->description;
-            $this->tags = $product->tags;
+            $this->unitPrice = $product->unitPrice;
+            $this->unitPriceUnit = $product->unitPriceUnit;
+            $this->technicalSheet = $product->technicalSheet;
+            $this->existingGallery = is_array($product->gallery) ? $product->gallery : [];
+            $this->newGallery = [];
+            $this->tags = is_array($product->tags) ? implode(', ', $product->tags) : $product->tags;
         } else {
             $this->editingProduct = null;
-            $this->reset(['name', 'sku', 'brand', 'price', 'unit', 'stock', 'categoryId', 'isActive', 'deliveryDays', 'image', 'newImage', 'description', 'tags']);
+            $this->reset(['name', 'sku', 'brand', 'price', 'unit', 'stock', 'categoryId', 'isActive', 'deliveryDays', 'image', 'newImage', 'description', 'tags', 'unitPrice', 'unitPriceUnit', 'technicalSheet', 'newGallery', 'existingGallery']);
             $this->isActive = true;
             $this->deliveryDays = 1;
             $this->description = '';
             $this->tags = '';
+            $this->existingGallery = [];
+            $this->newGallery = [];
         }
         $this->isModalOpen = true;
     }
@@ -103,14 +112,29 @@ class Products extends Component
         $this->validate([
             'name' => 'required|string|max:255',
             'sku' => 'required|string|unique:product,sku,' . ($this->editingProduct->id ?? 'NULL'),
-            'price' => 'required|numeric|min:0',
-            'stock' => 'required|integer|min:0',
             'categoryId' => 'required|exists:category,id',
+            'stock' => 'required|integer|min:0',
+            'price' => 'required_without:unitPrice|nullable|numeric|min:0',
+            'unitPrice' => 'required_without:price|nullable|numeric|min:0',
+            'unit' => 'required_with:price|nullable|string|max:50',
+            'unitPriceUnit' => 'required_with:unitPrice|nullable|string|max:50',
+        ], [
+            'name.required' => 'El nombre es obligatorio.',
+            'sku.required' => 'El SKU es obligatorio.',
+            'sku.unique' => 'Este SKU ya está en uso.',
+            'categoryId.required' => 'Debes seleccionar una categoría.',
+            'stock.required' => 'El stock es obligatorio.',
+            'price.required_without' => 'Debes ingresar al menos un precio (Paquete o Unidad).',
+            'unitPrice.required_without' => 'Debes ingresar al menos un precio (Paquete o Unidad).',
+            'unit.required_with' => 'Si ingresas precio de paquete, debes poner una etiqueta (ej: CAJA).',
+            'unitPriceUnit.required_with' => 'Si ingresas precio de unidad, debes poner una etiqueta (ej: UND).',
         ]);
 
         $status = 'in-stock';
         if ($this->stock == 0) $status = 'out-of-stock';
         elseif ($this->stock <= 10) $status = 'low-stock';
+
+        $tagsArray = is_string($this->tags) ? array_filter(array_map('trim', explode(',', $this->tags))) : ($this->tags ?? []);
 
         $data = [
             'name' => $this->name,
@@ -124,15 +148,27 @@ class Products extends Component
             'isActive' => $this->isActive,
             'deliveryDays' => $this->deliveryDays,
             'description' => $this->description ?? '',
-            'tags' => $this->tags ?? '',
+            'tags' => $tagsArray,
+            'unitPrice' => $this->unitPrice,
+            'unitPriceUnit' => $this->unitPriceUnit,
+            'technicalSheet' => $this->technicalSheet,
             'image' => $this->image ?? 'https://placehold.co/400x400?text=No+Image',
         ];
 
         if ($this->newImage) {
-            // Store locally and get path
             $path = $this->newImage->store('products', 'public');
             $data['image'] = '/storage/' . $path;
         }
+
+        // Handle Gallery
+        $gallery = $this->existingGallery ?? [];
+        if ($this->newGallery) {
+            foreach ($this->newGallery as $photo) {
+                $path = $photo->store('products/gallery', 'public');
+                $gallery[] = '/storage/' . $path;
+            }
+        }
+        $data['gallery'] = $gallery;
 
         if ($this->editingProduct) {
             $oldData = $this->editingProduct->toArray();
@@ -149,15 +185,36 @@ class Products extends Component
         $this->dispatch('notify', message: $message, type: 'success');
     }
 
+    public function removeGalleryImage($index)
+    {
+        if (isset($this->existingGallery[$index])) {
+            unset($this->existingGallery[$index]);
+            $this->existingGallery = array_values($this->existingGallery);
+        }
+    }
+
     public function render()
     {
         $query = Product::with('category');
 
+
         if ($this->search) {
-            $query->where(function ($q) {
-                $q->where('id', 'like', '%' . $this->search . '%')
-                    ->orWhere('name', 'like', '%' . $this->search . '%')
-                    ->orWhere('sku', 'like', '%' . $this->search . '%');
+            $words = explode(' ', $this->search);
+            $query->where(function ($q) use ($words) {
+                foreach ($words as $word) {
+                    $word = trim($word);
+                    if (strlen($word) < 2) continue; // Admin search allows shorter words
+                    $term = '%' . $word . '%';
+
+                    $q->orWhere(function ($sq) use ($term) {
+                        $sq->where('id', 'like', $term)
+                            ->orWhere('name', 'like', $term)
+                            ->orWhere('sku', 'like', $term)
+                            ->orWhere('brand', 'like', $term)
+                            ->orWhere('description', 'like', $term)
+                            ->orWhere('tags', 'like', $term);
+                    });
+                }
             });
         }
 
@@ -180,7 +237,7 @@ class Products extends Component
         }
 
         return view('livewire.admin.products', [
-            'products' => $query->latest()->paginate(10),
+            'products' => $query->latest()->paginate(50),
             'categories' => Category::all()
         ])->layout('layouts.admin');
     }

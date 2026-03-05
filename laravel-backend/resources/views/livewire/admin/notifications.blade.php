@@ -19,7 +19,7 @@
         x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
         x-transition:leave="transition ease-in duration-75" x-transition:leave-start="opacity-100 scale-100"
         x-transition:leave-end="opacity-0 scale-95"
-        class="absolute right-0 mt-3 w-80 bg-white rounded-2xl border border-slate-100 shadow-xl z-50 overflow-hidden">
+        class="absolute right-0 mt-3 w-80 bg-white rounded-2xl border border-slate-100 shadow-xl z-[100] overflow-hidden">
 
         <div class="p-4 border-b border-slate-50 flex items-center justify-between bg-slate-50/50">
             <h3 class="text-[14px] font-black text-slate-800 uppercase tracking-tight">Notificaciones</h3>

@@ -10,6 +10,8 @@ use App\Models\Category;
 
 class Dashboard extends Component
 {
+    public $period = '7days';
+
     public function render()
     {
         $stats = [
@@ -23,17 +25,23 @@ class Dashboard extends Component
 
         $recentOrders = Order::with('user')->latest()->take(5)->get();
 
-        // Real Sales Data (last 7 days)
+        // Dynamic Sales Data based on period
         $salesData = collect();
-        for ($i = 6; $i >= 0; $i--) {
+        $daysCount = $this->period === '7days' ? 7 : 30;
+
+        for ($i = $daysCount - 1; $i >= 0; $i--) {
             $date = now()->subDays($i);
             $dayName = $date->translatedFormat('D'); // e.g. Lun, Mar
+
+            // For month view, maybe just show date if it's too many labels
+            $label = $this->period === '7days' ? $dayName : $date->format('d/m');
+
             $total = Order::whereDate('createdAt', $date->toDateString())
                 ->whereNotIn('status', ['CANCELLED'])
                 ->sum('total');
 
             $salesData->push([
-                'label' => $dayName,
+                'label' => $label,
                 'total' => (float)$total,
                 'fullDate' => $date->toDateString()
             ]);

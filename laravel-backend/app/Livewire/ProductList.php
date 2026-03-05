@@ -4,12 +4,14 @@ namespace App\Livewire;
 
 use Livewire\Component;
 use Livewire\WithPagination;
+use Livewire\Attributes\On;
 use App\Models\Product;
 use App\Models\Category;
 
 class ProductList extends Component
 {
     use WithPagination;
+
     public $searchQuery = '';
     public $selectedCategory = 'all';
     public $sortBy = 'name';
@@ -17,7 +19,19 @@ class ProductList extends Component
     public $viewMode = 'grid';
     public $selectedProduct = null;
 
-    protected $listeners = ['view-product' => 'viewProduct'];
+    protected $listeners = [
+        'view-product' => 'viewProduct',
+    ];
+
+    #[On('search-updated')]
+    public function handleSearch($query)
+    {
+        $this->searchQuery = $query;
+        $this->resetPage();
+        if ($this->searchQuery) {
+            $this->dispatch('scroll-to-catalog');
+        }
+    }
 
     protected $queryString = ['searchQuery', 'selectedCategory', 'sortBy', 'todayOnly'];
 
@@ -30,10 +44,24 @@ class ProductList extends Component
         }
 
         if ($this->searchQuery) {
-            $query->where(function ($q) {
-                $q->where('name', 'like', '%' . $this->searchQuery . '%')
-                    ->orWhere('sku', 'like', '%' . $this->searchQuery . '%')
-                    ->orWhere('brand', 'like', '%' . $this->searchQuery . '%');
+            $words = explode(' ', $this->searchQuery);
+            $query->where(function ($q) use ($words) {
+                foreach ($words as $word) {
+                    $word = trim($word);
+                    if (strlen($word) < 3) continue;
+                    $term = '%' . $word . '%';
+
+                    $q->orWhere(function ($sq) use ($term) {
+                        $sq->where('name', 'like', $term)
+                            ->orWhere('sku', 'like', $term)
+                            ->orWhere('brand', 'like', $term)
+                            ->orWhere('description', 'like', $term)
+                            ->orWhere('tags', 'like', $term)
+                            ->orWhereHas('category', function ($cq) use ($term) {
+                                $cq->where('name', 'like', $term);
+                            });
+                    });
+                }
             });
         }
 
@@ -56,8 +84,11 @@ class ProductList extends Component
                 break;
         }
 
+        $products = $query->paginate(50);
+
         return view('livewire.product-list', [
-            'products' => $query->paginate(12),
+            'products' => $products,
+
             'categories' => Category::withCount(['products' => function ($query) {
                 $query->where('isActive', true);
             }])->get(),
@@ -69,16 +100,19 @@ class ProductList extends Component
     public function setCategory($id)
     {
         $this->selectedCategory = $id;
+        $this->resetPage();
     }
 
     public function setSort($sort)
     {
         $this->sortBy = $sort;
+        $this->resetPage();
     }
 
     public function toggleTodayOnly()
     {
         $this->todayOnly = !$this->todayOnly;
+        $this->resetPage();
     }
 
     public function setViewMode($mode)

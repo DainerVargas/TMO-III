@@ -78,7 +78,41 @@ class OrderCheckout extends Component
         $this->step--;
     }
 
-    public function submitOrder()
+    public function sendToWhatsApp()
+    {
+        $cart = session()->get('cart', []);
+        if (empty($cart)) {
+            $this->dispatch('notify', message: 'El carrito está vacío', type: 'error');
+            return;
+        }
+
+        $subtotal = collect($cart)->sum(fn($item) => $item['price'] * $item['quantity']);
+        $total = $subtotal * 1.18;
+
+        $text = "*Nuevo Pedido - TMO Suministros*\n\n";
+        $text .= "*Cliente:* {$this->name} {$this->lastName}\n";
+        $text .= "*Documento:* {$this->documentType} {$this->documentNumber}\n";
+        if ($this->companyName) $text .= "*Empresa:* {$this->companyName}\n";
+        $text .= "*Teléfono:* {$this->phone}\n";
+        $text .= "*Envío:* {$this->shippingAddress}, {$this->shippingDistrict}\n";
+        if ($this->shippingReference) $text .= "*Referencia:* {$this->shippingReference}\n\n";
+
+        $text .= "*Productos:*\n";
+        foreach ($cart as $item) {
+            $text .= "- {$item['name']} (x{$item['quantity']}): S/ " . number_format($item['price'] * $item['quantity'], 2) . "\n";
+        }
+
+        $text .= "\n*Total a pagar: S/ " . number_format($total, 2) . "*";
+
+        $url = "https://wa.me/51932621748?text=" . urlencode($text); // Replace with real company number
+
+        // Record order in DB before redirecting
+        $this->submitOrder(viaWhatsApp: true);
+
+        return redirect()->away($url);
+    }
+
+    public function submitOrder($viaWhatsApp = false)
     {
         $this->validate([
             'shippingAddress' => 'required|string|max:500',
@@ -87,15 +121,13 @@ class OrderCheckout extends Component
 
         $cart = session()->get('cart', []);
         if (empty($cart)) {
-            $this->dispatch('notify', message: 'El carrito está vacío', type: 'error');
+            if (!$viaWhatsApp) $this->dispatch('notify', message: 'El carrito está vacío', type: 'error');
             return;
         }
 
         DB::beginTransaction();
         try {
-            $subtotal = collect($cart)->sum(function ($item) {
-                return $item['price'] * $item['quantity'];
-            });
+            $subtotal = collect($cart)->sum(fn($item) => $item['price'] * $item['quantity']);
             $igv = $subtotal * 0.18;
             $total = $subtotal + $igv;
 
@@ -114,7 +146,6 @@ class OrderCheckout extends Component
                 ]);
             }
 
-            // Update user info if it was changed
             if (Auth::check()) {
                 $user = User::find(Auth::id());
                 $user->update([
@@ -132,7 +163,6 @@ class OrderCheckout extends Component
 
             DB::commit();
 
-            // Notify Admins
             $admins = User::where('role', 'ADMIN')->get();
             Notification::send($admins, new NewOrderNotification($order));
 
@@ -140,11 +170,13 @@ class OrderCheckout extends Component
             session()->forget('cart_count');
             $this->dispatch('cart-updated', count: 0);
 
-            $this->step = 3;
-            $this->dispatch('notify', message: '¡Pedido realizado con éxito!', type: 'success');
+            if (!$viaWhatsApp) {
+                $this->step = 4; // Move to success step
+                $this->dispatch('notify', message: '¡Pedido realizado con éxito!', type: 'success');
+            }
         } catch (\Exception $e) {
             DB::rollBack();
-            $this->dispatch('notify', message: 'Error al procesar el pedido: ' . $e->getMessage(), type: 'error');
+            if (!$viaWhatsApp) $this->dispatch('notify', message: 'Error al procesar el pedido: ' . $e->getMessage(), type: 'error');
         }
     }
 

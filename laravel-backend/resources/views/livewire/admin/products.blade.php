@@ -114,10 +114,25 @@
                                     class="text-[13px] text-slate-600 font-medium capitalize">{{ $p->category->name ?? $p->categoryId }}</span>
                             </td>
                             <td class="px-6 py-4">
-                                <div class="flex flex-col">
-                                    <span class="text-[14px] font-bold text-[#0a4d8c]">S/
-                                        {{ number_format($p->price, 2) }}</span>
-                                    <span class="text-[11px] text-slate-400">x {{ $p->unit }}</span>
+                                <div class="flex flex-col gap-1">
+                                    @if ($p->price > 0)
+                                        <div class="flex flex-col">
+                                            <span class="text-[13px] font-bold text-[#0a4d8c] leading-tight">S/
+                                                {{ number_format($p->price, 2) }}</span>
+                                            <span
+                                                class="text-[10px] text-slate-400 uppercase font-black tracking-tighter">Paquete:
+                                                {{ $p->unit }}</span>
+                                        </div>
+                                    @endif
+                                    @if ($p->unitPrice > 0)
+                                        <div class="flex flex-col border-t border-slate-100 pt-1">
+                                            <span class="text-[13px] font-bold text-emerald-600 leading-tight">S/
+                                                {{ number_format($p->unitPrice, 2) }}</span>
+                                            <span
+                                                class="text-[10px] text-slate-400 uppercase font-black tracking-tighter">Unidad:
+                                                {{ $p->unitPriceUnit }}</span>
+                                        </div>
+                                    @endif
                                 </div>
                             </td>
                             <td class="px-6 py-4">
@@ -131,7 +146,8 @@
                                 <button wire:click="toggleStatus({{ $p->id }})"
                                     class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold transition-all {{ $p->isActive ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-500' }}">
                                     @if ($p->isActive)
-                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <svg class="w-3 h-3" fill="none" stroke="currentColor"
+                                            viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                                 d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -207,7 +223,7 @@
 
                 <div class="p-6 max-h-[80vh] overflow-y-auto space-y-6">
                     {{-- Form fields --}}
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
                         <div class="space-y-1">
                             <label class="text-[12px] font-bold text-slate-500 ml-1">Nombre del Producto</label>
                             <input wire:model="name" type="text"
@@ -226,33 +242,94 @@
                         </div>
                     </div>
 
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div class="space-y-1">
-                            <label class="text-[12px] font-bold text-slate-500 ml-1">Categoría</label>
-                            <select wire:model="categoryId"
-                                class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-[14px] outline-none focus:bg-white focus:border-[#0a4d8c]">
-                                <option value="">Seleccionar...</option>
-                                @foreach ($categories as $cat)
-                                    <option value="{{ $cat->id }}">{{ $cat->name }}</option>
-                                @endforeach
-                            </select>
-                            @error('categoryId')
-                                <span class="text-red-500 text-[11px] ml-1">{{ $message }}</span>
-                            @enderror
+                    <div class="space-y-1">
+                        <label class="text-[12px] font-bold text-slate-500 ml-1">Categoría</label>
+                        <select wire:model="categoryId"
+                            class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-[14px] outline-none focus:bg-white focus:border-[#0a4d8c]">
+                            <option value="">Seleccionar...</option>
+                            @foreach ($categories as $cat)
+                                <option value="{{ $cat->id }}">{{ $cat->name }}</option>
+                            @endforeach
+                        </select>
+                        @error('categoryId')
+                            <span class="text-red-500 text-[11px] ml-1">{{ $message }}</span>
+                        @enderror
+                    </div>
+
+                    <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100 mb-6">
+                        <h4 class="text-[12px] font-bold text-[#0a4d8c] uppercase tracking-widest mb-4">Configuración
+                            de Precios</h4>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            {{-- Package Option --}}
+                            <div class="space-y-4">
+                                <div class="flex items-center gap-2">
+                                    <div
+                                        class="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center text-[#0a4d8c]">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor"
+                                            viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                                        </svg>
+                                    </div>
+                                    <span class="text-[13px] font-bold text-slate-700">Opción de Paquete/Caja</span>
+                                </div>
+                                <div class="grid grid-cols-2 gap-3 pl-10">
+                                    <div class="space-y-1">
+                                        <label class="text-[11px] font-bold text-slate-400">Precio</label>
+                                        <input wire:model="price" type="number" step="0.01"
+                                            class="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-[13px] focus:border-[#0a4d8c] outline-none">
+                                        @error('price')
+                                            <span class="text-red-500 text-[10px]">{{ $message }}</span>
+                                        @enderror
+                                    </div>
+                                    <div class="space-y-1">
+                                        <label class="text-[11px] font-bold text-slate-400">Etiqueta (Eje:
+                                            CAJA)</label>
+                                        <input wire:model="unit" type="text"
+                                            class="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-[13px] focus:border-[#0a4d8c] outline-none">
+                                        @error('unit')
+                                            <span class="text-red-500 text-[10px]">{{ $message }}</span>
+                                        @enderror
+                                    </div>
+                                </div>
+                            </div>
+
+                            {{-- Unit Option --}}
+                            <div class="space-y-4 border-l border-slate-200 pl-6">
+                                <div class="flex items-center gap-2">
+                                    <div
+                                        class="w-8 h-8 rounded-lg bg-emerald-100 flex items-center justify-center text-emerald-600">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor"
+                                            viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M20 12H4" />
+                                        </svg>
+                                    </div>
+                                    <span class="text-[13px] font-bold text-slate-700">Opción de Unidad
+                                        Individual</span>
+                                </div>
+                                <div class="grid grid-cols-2 gap-3 pl-10">
+                                    <div class="space-y-1">
+                                        <label class="text-[11px] font-bold text-slate-400">Precio</label>
+                                        <input wire:model="unitPrice" type="number" step="0.01"
+                                            class="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-[13px] focus:border-[#0a4d8c] outline-none">
+                                        @error('unitPrice')
+                                            <span class="text-red-500 text-[10px]">{{ $message }}</span>
+                                        @enderror
+                                    </div>
+                                    <div class="space-y-1">
+                                        <label class="text-[11px] font-bold text-slate-400">Etiqueta (Eje: UND)</label>
+                                        <input wire:model="unitPriceUnit" type="text"
+                                            class="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-[13px] focus:border-[#0a4d8c] outline-none">
+                                        @error('unitPriceUnit')
+                                            <span class="text-red-500 text-[10px]">{{ $message }}</span>
+                                        @enderror
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                        <div class="space-y-1">
-                            <label class="text-[12px] font-bold text-slate-500 ml-1">Precio (S/)</label>
-                            <input wire:model="price" type="number" step="0.01"
-                                class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-[14px] focus:bg-white focus:border-[#0a4d8c] outline-none transition-all">
-                            @error('price')
-                                <span class="text-red-500 text-[11px] ml-1">{{ $message }}</span>
-                            @enderror
-                        </div>
-                        <div class="space-y-1">
-                            <label class="text-[12px] font-bold text-slate-500 ml-1">Unidad</label>
-                            <input wire:model="unit" type="text" placeholder="UND, CJ, etc"
-                                class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-[14px] focus:bg-white focus:border-[#0a4d8c] outline-none transition-all">
-                        </div>
+                        <p class="text-[10px] text-slate-400 mt-4 px-1 italic">* Si dejas una opción vacía, no se
+                            mostrará al cliente.</p>
                     </div>
 
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -292,9 +369,15 @@
                             class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-[14px] focus:bg-white focus:border-[#0a4d8c] outline-none transition-all">
                     </div>
 
+                    <div class="space-y-1">
+                        <label class="text-[12px] font-bold text-slate-500 ml-1">Link Ficha Técnica</label>
+                        <input wire:model="technicalSheet" type="url" placeholder="https://ejemplo.com/ficha.pdf"
+                            class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-[14px] focus:bg-white focus:border-[#0a4d8c] outline-none transition-all">
+                    </div>
+
                     {{-- Image --}}
                     <div class="space-y-2">
-                        <label class="text-[12px] font-bold text-slate-500 ml-1">Imagen del Producto</label>
+                        <label class="text-[12px] font-bold text-slate-500 ml-1">Imagen Principal</label>
                         <div class="flex items-center gap-4">
                             <div
                                 class="w-24 h-24 rounded-2xl bg-slate-50 border-2 border-dashed border-slate-200 flex items-center justify-center overflow-hidden">
@@ -322,6 +405,62 @@
                                 </label>
                                 <p class="text-[11px] text-slate-400 mt-2">Recomendado: 500x500px, PNG o JPG</p>
                             </div>
+                        </div>
+                    </div>
+
+                    {{-- Gallery --}}
+                    <div class="space-y-4 pt-4 border-t border-slate-100">
+                        <label class="text-[12px] font-bold text-slate-500 ml-1 uppercase tracking-wider">Galería de
+                            Imágenes (Opcional)</label>
+
+                        <div class="grid grid-cols-4 sm:grid-cols-6 gap-3">
+                            {{-- Existing Gallery Images --}}
+                            @foreach ($existingGallery as $index => $img)
+                                <div
+                                    class="relative aspect-square rounded-xl bg-slate-50 border border-slate-200 overflow-hidden group">
+                                    <img src="{{ $img }}" class="w-full h-full object-contain">
+                                    <button wire:click="removeGalleryImage({{ $index }})" type="button"
+                                        class="absolute top-1 right-1 bg-red-500 text-white p-1 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <svg class="w-3 h-3" fill="none" stroke="currentColor"
+                                            viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3"
+                                                d="M6 18L18 6M6 6l12 12" />
+                                        </svg>
+                                    </button>
+                                </div>
+                            @endforeach
+
+                            {{-- New Gallery Images Preview --}}
+                            @foreach ($newGallery as $index => $photo)
+                                <div
+                                    class="relative aspect-square rounded-xl bg-slate-50 border border-slate-200 overflow-hidden">
+                                    <img src="{{ $photo->temporaryUrl() }}" class="w-full h-full object-contain">
+                                    <div class="absolute inset-0 bg-emerald-500/10 flex items-center justify-center">
+                                        <svg class="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor"
+                                            viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3"
+                                                d="M5 13l4 4L19 7" />
+                                        </svg>
+                                    </div>
+                                </div>
+                            @endforeach
+
+                            {{-- Upload Button --}}
+                            <label
+                                class="cursor-pointer aspect-square rounded-xl border-2 border-dashed border-slate-200 flex flex-col items-center justify-center gap-1 hover:bg-slate-50 transition-colors group">
+                                <input type="file" wire:model="newGallery" multiple class="hidden">
+                                <svg class="w-5 h-5 text-slate-400 group-hover:text-[#0a4d8c] transition-colors"
+                                    fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M12 4v16m8-8H4" />
+                                </svg>
+                                <span
+                                    class="text-[9px] font-black text-slate-400 uppercase tracking-tighter">Añadir</span>
+                            </label>
+                        </div>
+                        <div wire:loading wire:target="newGallery"
+                            class="text-[11px] text-[#0a4d8c] font-bold animate-pulse">
+                            Subiendo imágenes...
                         </div>
                     </div>
                 </div>

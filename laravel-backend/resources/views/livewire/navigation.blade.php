@@ -1,7 +1,7 @@
 <div class="sticky top-0 z-[100] w-full shadow-2xl shadow-blue-900/10" x-data="{ mobileMenuOpen: @entangle('mobileMenuOpen'), scrolled: false }"
     @scroll.window="scrolled = (window.pageYOffset > 20)">
     {{-- Top Info Bar --}}
-    <div class="bg-[#0099cc] text-white py-2 px-4 shadow-sm" x-show="!scrolled" x-transition>
+    <div class="bg-grad-top text-white py-2 px-4 shadow-sm" x-show="!scrolled" x-transition>
         <div class="max-w-7xl mx-auto flex items-center justify-between">
             <div class="flex items-center gap-6">
                 <div class="flex items-center gap-2">
@@ -37,9 +37,12 @@
     <header class="bg-white border-b border-gray-100 shadow-sm">
         <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between gap-8">
             {{-- Logo --}}
-            <a href="/" class="shrink-0">
+            <a href="/" class="shrink-0 relative group">
+                <div
+                    class="absolute -inset-2 bg-grad-primary/10 rounded-2xl blur-lg group-hover:bg-grad-primary/20 transition-all">
+                </div>
                 <img src="http://imagenes.tmo.com.pe/imagenes/logotipo/SSI%20logo.png" alt="Smart Services"
-                    class="h-10 sm:h-12 w-auto">
+                    class="h-10 sm:h-12 w-auto relative drop-shadow-sm">
             </a>
 
             {{-- Search --}}
@@ -57,21 +60,21 @@
             {{-- Right Actions --}}
             <div class="flex items-center gap-5">
                 <a href="{{ Auth::check() ? '/admin/dashboard' : '/login' }}"
-                    class="hidden md:flex items-center gap-2.5 text-slate-700 hover:text-[#0a4d8c] font-black text-[14.5px] group">
-                    <svg class="w-5.5 h-5.5 text-slate-400 group-hover:text-[#0a4d8c] transition-colors" fill="none"
+                    class="hidden md:flex items-center gap-1 text-slate-700 hover:text-[#0a4d8c] font-black text-[14.5px] group">
+                    <svg class="w-6 h-6 text-slate-400 group-hover:text-[#0a4d8c] transition-colors" fill="none"
                         stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"
                             d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                     </svg>
                     @if (Auth::check())
-                        {{ Auth::user()->name }}
+                        {{ Auth::user()->name }} {{ Auth::user()->lastName }}
                     @else
                         Iniciar Sesión
                     @endif
                 </a>
 
                 <button wire:click="openCart"
-                    class="bg-[#0a4d8c] hover:bg-[#083d6f] text-white px-6 py-3 rounded-2xl flex items-center gap-3 font-black text-[15px] shadow-lg shadow-blue-500/20 active:scale-95 transition-all">
+                    class="bg-grad-primary hover:brightness-110 text-white px-6 py-3 rounded-2xl flex items-center gap-3 font-black text-[15px] shadow-lg shadow-blue-500/20 active:scale-95 transition-all">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
@@ -86,7 +89,7 @@
         </div>
 
         {{-- Nav --}}
-        <nav class="bg-[#00bcd4]">
+        <nav class="bg-grad-accent">
             <div class="max-w-7xl mx-auto flex items-center justify-center">
                 @foreach (['Inicio' => '/', 'Nuestra empresa' => '/empresa', 'Productos' => '/productos', 'Contáctanos' => '/contactanos'] as $label => $path)
                     <a href="{{ $path }}"
@@ -108,8 +111,7 @@
     {{-- Mobile Menu --}}
     <div x-show="mobileMenuOpen" x-transition:enter="transition ease-out duration-200"
         x-transition:enter-start="opacity-0 -translate-y-4" x-transition:enter-end="opacity-100 translate-y-0"
-        class="md:hidden border-t border-white/10 px-4 py-4 space-y-2 shadow-2xl"
-        style="background: linear-gradient(180deg, #0a4d8c 0%, #0f5ca6 100%);">
+        class="md:hidden border-t border-white/10 px-4 py-4 space-y-2 shadow-2xl bg-grad-primary">
         @foreach (['Inicio' => '/', 'Nuestra empresa' => '/empresa', 'Productos' => '/productos', 'Contáctanos' => '/contactanos'] as $label => $path)
             <a href="{{ $path }}"
                 class="w-full flex items-center justify-between px-5 py-4 rounded-xl text-white/90 hover:text-white hover:bg-white/10 transition-all font-sans font-bold text-[1rem] border border-white/5">

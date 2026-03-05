@@ -12,6 +12,12 @@ class Product extends Model
 
     protected $casts = [
         'tags' => 'array',
+        'gallery' => 'array',
+    ];
+
+    protected $appends = [
+        'price_with_igv',
+        'unit_price_with_igv',
     ];
 
     protected $fillable = [
@@ -31,7 +37,9 @@ class Product extends Model
         'tags',
         'unitPrice',
         'unitPriceUnit',
-        'isActive'
+        'isActive',
+        'technicalSheet',
+        'gallery'
     ];
 
     public function category()
@@ -47,5 +55,25 @@ class Product extends Model
     public function stockMovements()
     {
         return $this->hasMany(StockMovement::class, 'productId');
+    }
+
+    public function getPriceWithIgvAttribute()
+    {
+        return $this->price ? round($this->price * 1.18, 2) : 0;
+    }
+
+    public function setPriceAttribute($value)
+    {
+        $this->attributes['price'] = ($value === '' || $value === null) ? null : $value;
+    }
+
+    public function setUnitPriceAttribute($value)
+    {
+        $this->attributes['unitPrice'] = ($value === '' || $value === null) ? null : $value;
+    }
+
+    public function getUnitPriceWithIgvAttribute()
+    {
+        return $this->unitPrice ? round($this->unitPrice * 1.18, 2) : 0;
     }
 }

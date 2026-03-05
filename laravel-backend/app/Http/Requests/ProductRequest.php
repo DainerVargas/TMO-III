@@ -25,7 +25,7 @@ class ProductRequest extends FormRequest
             'name' => 'required|string|max:255',
             'sku' => 'required|string|unique:product,sku' . ($isUpdate ? ',' . $this->route('product') : ''),
             'categoryId' => 'required|string|exists:category,id',
-            'price' => 'required|numeric|min:0',
+            'price' => 'nullable|numeric|min:0',
             'unit' => 'required|string',
             'stock' => 'required|integer|min:0',
             'stockStatus' => 'required|string',

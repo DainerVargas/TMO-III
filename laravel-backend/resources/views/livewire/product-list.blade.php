@@ -1,4 +1,4 @@
-<div>
+<div x-on:scroll-to-catalog.window="document.getElementById('catalog').scrollIntoView({behavior: 'smooth'})">
     @if (request()->routeIs('home'))
         {{-- HOME PAGE LAYOUT (Original) --}}
         <livewire:hero />
@@ -145,8 +145,9 @@
                 @elseif($viewMode === 'grid')
                     <div class="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
                         @foreach ($products as $product)
-                            <div class="bg-white rounded-[1.5rem] p-4 border border-gray-100 shadow-sm hover:shadow-xl hover:border-[#0a4d8c]/5 transition-all duration-300 group flex flex-col relative"
-                                x-data="{ quantity: 1, unit: 'box', basePrice: {{ $product->price }}, unitPrice: {{ $product->unitPrice ?? 0 }}, unitLabel: '{{ $product->unit }}', unitPriceLabel: '{{ $product->unitPriceUnit ?? '' }}' }">
+                            <div wire:key="product-grid-{{ $product->id }}"
+                                class="bg-white rounded-[1.5rem] p-4 border border-gray-100 shadow-sm hover:shadow-xl hover:border-[#0a4d8c]/5 transition-all duration-300 group flex flex-col relative"
+                                x-data="{ quantity: 1, unit: '{{ $product->price > 0 ? 'box' : 'unit' }}', basePrice: {{ $product->price_with_igv }}, unitPrice: {{ $product->unit_price_with_igv }}, unitLabel: '{{ $product->unit }}', unitPriceLabel: '{{ $product->unitPriceUnit ?? '' }}' }">
 
                                 {{-- Badges Top --}}
                                 <div class="absolute top-4 left-4 z-10 flex flex-col gap-2">
@@ -184,23 +185,38 @@
                                     </div>
 
                                     <div class="mt-auto space-y-4">
-                                        {{-- Unit Toggle if exists --}}
-                                        @if ($product->unitPrice)
-                                            <div class="flex bg-slate-100 p-0.5 rounded-lg w-max">
-                                                <button @click="unit = 'unit'"
-                                                    :class="unit === 'unit' ? 'bg-white shadow-sm text-[#0a4d8c]' :
-                                                        'text-slate-400'"
-                                                    class="px-2.5 py-1 rounded-md text-[9px] font-black transition-all">
-                                                    {{ $product->unitPriceUnit }}
-                                                </button>
-                                                <button @click="unit = 'box'"
-                                                    :class="unit === 'box' ? 'bg-white shadow-sm text-[#0a4d8c]' :
-                                                        'text-slate-400'"
-                                                    class="px-2.5 py-1 rounded-md text-[9px] font-black transition-all">
-                                                    {{ $product->unit }}
-                                                </button>
-                                            </div>
-                                        @endif
+                                        {{-- Unit Toggle & Technical Sheet --}}
+                                        <div class="flex items-center justify-between gap-2 flex-wrap min-h-[32px]">
+                                            @if ($product->price > 0 && $product->unitPrice > 0)
+                                                <div class="flex bg-slate-100 p-0.5 rounded-lg w-max">
+                                                    <button @click="unit = 'unit'"
+                                                        :class="unit === 'unit' ? 'bg-white shadow-sm text-[#0a4d8c]' :
+                                                            'text-slate-400'"
+                                                        class="px-2.5 py-1 rounded-md text-[9px] font-black transition-all">
+                                                        {{ $product->unitPriceUnit }}
+                                                    </button>
+                                                    <button @click="unit = 'box'"
+                                                        :class="unit === 'box' ? 'bg-white shadow-sm text-[#0a4d8c]' :
+                                                            'text-slate-400'"
+                                                        class="px-2.5 py-1 rounded-md text-[9px] font-black transition-all">
+                                                        {{ $product->unit }}
+                                                    </button>
+                                                </div>
+                                            @endif
+
+                                            @if ($product->technicalSheet)
+                                                <a href="{{ $product->technicalSheet }}" target="_blank"
+                                                    class="flex items-center gap-1.5 px-2.5 py-1.5 bg-slate-50 border border-slate-100 text-[#0a4d8c] rounded-xl text-[9px] font-black uppercase tracking-wider hover:bg-[#0a4d8c] hover:text-white transition-all shadow-sm group/sheet">
+                                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor"
+                                                        viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                                            stroke-width="2.5"
+                                                            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                                    </svg>
+                                                    <span class="sr-only sm:not-sr-only">Ficha Técnica</span>
+                                                </a>
+                                            @endif
+                                        </div>
 
                                         <div class="flex flex-col">
                                             <div class="flex items-baseline gap-1">
@@ -257,8 +273,9 @@
                 @else
                     <div class="space-y-3">
                         @foreach ($products as $product)
-                            <div class="bg-white rounded-[1.2rem] p-3 border border-gray-100 shadow-sm hover:shadow-xl hover:border-[#0a4d8c]/5 transition-all duration-300 flex items-center gap-4 sm:gap-6 group relative"
-                                x-data="{ quantity: 1, unit: 'box', basePrice: {{ $product->price }}, unitPrice: {{ $product->unitPrice ?? 0 }}, unitLabel: '{{ $product->unit }}', unitPriceLabel: '{{ $product->unitPriceUnit ?? '' }}' }">
+                            <div wire:key="product-list-{{ $product->id }}"
+                                class="bg-white rounded-[1.2rem] p-3 border border-gray-100 shadow-sm hover:shadow-xl hover:border-[#0a4d8c]/5 transition-all duration-300 flex items-center gap-4 sm:gap-6 group relative"
+                                x-data="{ quantity: 1, unit: '{{ $product->price > 0 ? 'box' : 'unit' }}', basePrice: {{ $product->price_with_igv }}, unitPrice: {{ $product->unit_price_with_igv }}, unitLabel: '{{ $product->unit }}', unitPriceLabel: '{{ $product->unitPriceUnit ?? '' }}' }">
                                 <div
                                     class="w-20 h-20 sm:w-28 sm:h-28 bg-gray-50 rounded-[1rem] p-3 shrink-0 transition-transform group-hover:scale-105 duration-500">
                                     <img src="{{ $product->image }}" alt="{{ $product->name }}"
@@ -284,63 +301,86 @@
                                     <div class="flex items-center gap-4">
                                         <div class="flex items-baseline gap-1">
                                             <span class="text-[12px] font-bold text-gray-400">S/</span>
-                                            <span
-                                                class="text-[1.5rem] font-black text-[#0a4d8c] font-montserrat leading-none">
-                                                <span
-                                                    x-text="unit === 'unit' ? unitPrice.toFixed(2) : basePrice.toFixed(2)"></span>
-                                            </span>
-                                            <span class="text-[12px] text-gray-400 font-bold ml-1"
-                                                x-text="'/' + (unit === 'unit' ? unitPriceLabel : unitLabel)"></span>
+                                            <div class="flex flex-col gap-3">
+                                                <div
+                                                    class="flex items-center justify-between gap-2 flex-wrap min-h-[32px]">
+                                                    @if ($product->price > 0 && $product->unitPrice > 0)
+                                                        <div
+                                                            class="flex bg-slate-100 p-0.5 rounded-lg w-max shadow-sm">
+                                                            <button @click="unit = 'unit'"
+                                                                :class="unit === 'unit' ?
+                                                                    'bg-white shadow-sm text-[#0a4d8c]' :
+                                                                    'text-slate-400'"
+                                                                class="px-3 py-1 rounded-md text-[10px] font-black transition-all">
+                                                                {{ $product->unitPriceUnit }}
+                                                            </button>
+                                                            <button @click="unit = 'box'"
+                                                                :class="unit === 'box' ?
+                                                                    'bg-white shadow-sm text-[#0a4d8c]' :
+                                                                    'text-slate-400'"
+                                                                class="px-3 py-1 rounded-md text-[10px] font-black transition-all">
+                                                                {{ $product->unit }}
+                                                            </button>
+                                                        </div>
+                                                    @endif
+
+                                                    @if ($product->technicalSheet)
+                                                        <a href="{{ $product->technicalSheet }}" target="_blank"
+                                                            class="flex items-center gap-1.5 px-2.5 py-1.5 bg-slate-50 border border-slate-100 text-[#0a4d8c] rounded-xl text-[9px] font-black uppercase tracking-wider hover:bg-[#0a4d8c] hover:text-white transition-all shadow-sm group/sheet">
+                                                            <svg class="w-3.5 h-3.5" fill="none"
+                                                                stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path stroke-linecap="round" stroke-linejoin="round"
+                                                                    stroke-width="2.5"
+                                                                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                                            </svg>
+                                                            <span class="hidden sm:inline">Ficha Técnica</span>
+                                                            <span class="sm:hidden">Ficha</span>
+                                                        </a>
+                                                    @endif
+                                                </div>
+
+                                                <div class="flex items-baseline">
+                                                    <span
+                                                        class="text-[1.6rem] font-black text-[#0a4d8c] font-montserrat">
+                                                        S/ <span
+                                                            x-text="unit === 'unit' ? unitPrice.toFixed(2) : basePrice.toFixed(2)"></span>
+                                                    </span>
+                                                    <span class="text-[12px] text-gray-400 font-bold ml-1 uppercase"
+                                                        x-text="'/' + (unit === 'unit' ? unitPriceLabel : unitLabel)"></span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="flex flex-col sm:flex-row items-center gap-3 shrink-0">
+                                        <div
+                                            class="flex items-center bg-gray-50 border border-gray-100 rounded-xl overflow-hidden px-1">
+                                            <button @click="if(quantity > 1) quantity--"
+                                                class="p-2 text-gray-400 hover:text-[#0a4d8c] transition-colors">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor"
+                                                    viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                        stroke-width="2" d="M20 12H4" />
+                                                </svg>
+                                            </button>
+                                            <input type="number" x-model="quantity"
+                                                class="w-10 text-center text-[14px] font-black font-sans bg-transparent border-none p-0 focus:ring-0">
+                                            <button @click="quantity++"
+                                                class="p-2 text-gray-400 hover:text-[#0a4d8c] transition-colors">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor"
+                                                    viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                        stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                                                </svg>
+                                            </button>
                                         </div>
 
-                                        @if ($product->unitPrice)
-                                            <div class="flex bg-slate-100 p-0.5 rounded-lg w-max scale-90">
-                                                <button @click="unit = 'unit'"
-                                                    :class="unit === 'unit' ? 'bg-white shadow-sm text-[#0a4d8c]' :
-                                                        'text-slate-400'"
-                                                    class="px-3 py-1 rounded-md text-[10px] font-black transition-all">
-                                                    {{ $product->unitPriceUnit }}
-                                                </button>
-                                                <button @click="unit = 'box'"
-                                                    :class="unit === 'box' ? 'bg-white shadow-sm text-[#0a4d8c]' :
-                                                        'text-slate-400'"
-                                                    class="px-3 py-1 rounded-md text-[10px] font-black transition-all">
-                                                    {{ $product->unit }}
-                                                </button>
-                                            </div>
-                                        @endif
-                                    </div>
-                                </div>
-
-                                <div class="flex flex-col sm:flex-row items-center gap-3 shrink-0">
-                                    <div
-                                        class="flex items-center bg-gray-50 border border-gray-100 rounded-xl overflow-hidden px-1">
-                                        <button @click="if(quantity > 1) quantity--"
-                                            class="p-2 text-gray-400 hover:text-[#0a4d8c] transition-colors">
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor"
-                                                viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                    d="M20 12H4" />
-                                            </svg>
-                                        </button>
-                                        <input type="number" x-model="quantity"
-                                            class="w-10 text-center text-[14px] font-black font-sans bg-transparent border-none p-0 focus:ring-0">
-                                        <button @click="quantity++"
-                                            class="p-2 text-gray-400 hover:text-[#0a4d8c] transition-colors">
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor"
-                                                viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                    d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                                            </svg>
+                                        <button @click="$wire.addToCart({{ $product->id }}, quantity, unit)"
+                                            class="bg-[#0a4d8c] text-white px-6 py-2.5 rounded-xl font-black text-[12px] uppercase tracking-wider shadow-lg shadow-blue-500/10 hover:shadow-blue-500/40 hover:bg-[#083d6f] active:scale-95 transition-all">
+                                            Agregar
                                         </button>
                                     </div>
-
-                                    <button @click="$wire.addToCart({{ $product->id }}, quantity, unit)"
-                                        class="bg-[#0a4d8c] text-white px-6 py-2.5 rounded-xl font-black text-[12px] uppercase tracking-wider shadow-lg shadow-blue-500/10 hover:shadow-blue-500/40 hover:bg-[#083d6f] active:scale-95 transition-all">
-                                        Agregar
-                                    </button>
                                 </div>
-                            </div>
                         @endforeach
                     </div>
                 @endif
@@ -581,7 +621,7 @@
                             @foreach ($products as $product)
                                 @if ($viewMode === 'grid')
                                     <div class="bg-white rounded-2xl border border-slate-100 shadow-sm hover:shadow-xl hover:border-[#0a4d8c]/10 transition-all duration-300 flex flex-col group overflow-hidden"
-                                        x-data="{ quantity: 1, unit: 'box', basePrice: {{ $product->price }}, unitPrice: {{ $product->unitPrice ?? 0 }}, unitLabel: '{{ $product->unit }}', unitPriceLabel: '{{ $product->unitPriceUnit ?? '' }}' }">
+                                        x-data="{ quantity: 1, unit: '{{ $product->price > 0 ? 'box' : 'unit' }}', basePrice: {{ $product->price_with_igv }}, unitPrice: {{ $product->unit_price_with_igv }}, unitLabel: '{{ $product->unit }}', unitPriceLabel: '{{ $product->unitPriceUnit ?? '' }}' }">
                                         <div wire:click="viewProduct({{ $product->id }})"
                                             class="relative aspect-square bg-[#f8fafc] overflow-hidden group-hover:scale-105 transition-transform duration-500 cursor-pointer">
                                             <img src="{{ $product->image }}" alt="{{ $product->name }}"
@@ -618,18 +658,38 @@
                                                     Entrega:
                                                     {{ $product->deliveryDays == 1 ? 'Mañana' : $product->deliveryDays . ' días' }}
                                                 </div>
-                                                @if ($product->unitPrice)
-                                                    <div class="flex bg-slate-100 p-0.5 rounded-lg w-max">
-                                                        <button @click="unit = 'unit'"
-                                                            :class="unit === 'unit' ? 'bg-white shadow-sm text-[#0a4d8c]' :
-                                                                'text-slate-400'"
-                                                            class="px-3 py-1 rounded-md text-[10px] font-black transition-all">{{ $product->unitPriceUnit }}</button>
-                                                        <button @click="unit = 'box'"
-                                                            :class="unit === 'box' ? 'bg-white shadow-sm text-[#0a4d8c]' :
-                                                                'text-slate-400'"
-                                                            class="px-3 py-1 rounded-md text-[10px] font-black transition-all">{{ $product->unit }}</button>
-                                                    </div>
-                                                @endif
+                                                <div
+                                                    class="flex items-center justify-between gap-2 flex-wrap min-h-[32px]">
+                                                    @if ($product->price > 0 && $product->unitPrice > 0)
+                                                        <div
+                                                            class="flex bg-slate-100 p-0.5 rounded-lg w-max shadow-sm">
+                                                            <button @click="unit = 'unit'"
+                                                                :class="unit === 'unit' ?
+                                                                    'bg-white shadow-sm text-[#0a4d8c]' :
+                                                                    'text-slate-400'"
+                                                                class="px-3 py-1.5 rounded-md text-[10px] font-black transition-all">{{ $product->unitPriceUnit }}</button>
+                                                            <button @click="unit = 'box'"
+                                                                :class="unit === 'box' ?
+                                                                    'bg-white shadow-sm text-[#0a4d8c]' :
+                                                                    'text-slate-400'"
+                                                                class="px-3 py-1.5 rounded-md text-[10px] font-black transition-all">{{ $product->unit }}</button>
+                                                        </div>
+                                                    @endif
+
+                                                    @if ($product->technicalSheet)
+                                                        <a href="{{ $product->technicalSheet }}" target="_blank"
+                                                            class="flex items-center gap-1.5 px-2.5 py-1.5 bg-slate-50 border border-slate-100 text-[#0a4d8c] rounded-xl text-[9px] font-black uppercase tracking-wider hover:bg-[#0a4d8c] hover:text-white transition-all shadow-sm group/sheet">
+                                                            <svg class="w-3.5 h-3.5" fill="none"
+                                                                stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path stroke-linecap="round" stroke-linejoin="round"
+                                                                    stroke-width="2.5"
+                                                                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                                            </svg>
+                                                            <span class="hidden sm:inline">Ficha Técnica</span>
+                                                            <span class="sm:hidden">Ficha</span>
+                                                        </a>
+                                                    @endif
+                                                </div>
                                                 <div class="flex items-baseline gap-1">
                                                     <span
                                                         class="text-[1.4rem] font-black text-[#0a4d8c] font-montserrat">S/
@@ -678,7 +738,7 @@
                                     </div>
                                 @else
                                     <div class="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm hover:shadow-xl flex items-center gap-6 group"
-                                        x-data="{ quantity: 1, unit: 'box', basePrice: {{ $product->price }}, unitPrice: {{ $product->unitPrice ?? 0 }}, unitLabel: '{{ $product->unit }}', unitPriceLabel: '{{ $product->unitPriceUnit ?? '' }}' }">
+                                        x-data="{ quantity: 1, unit: '{{ $product->price > 0 ? 'box' : 'unit' }}', basePrice: {{ $product->price_with_igv }}, unitPrice: {{ $product->unit_price_with_igv }}, unitLabel: '{{ $product->unit }}', unitPriceLabel: '{{ $product->unitPriceUnit ?? '' }}' }">
                                         <div wire:click="viewProduct({{ $product->id }})"
                                             class="w-32 h-32 bg-[#f8fafc] rounded-2xl shrink-0 p-4 cursor-pointer hover:scale-105 transition-transform">
                                             <img src="{{ $product->image }}" class="w-full h-full object-contain">
@@ -761,32 +821,60 @@
                 <div class="p-8 md:p-10">
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-12">
                         {{-- Image Side --}}
-                        <div
-                            class="relative aspect-square rounded-[2.5rem] bg-white border border-slate-100 p-8 shadow-xl shadow-slate-200/50 flex items-center justify-center group overflow-hidden">
-                            <div class="absolute inset-0 bg-gradient-to-tr from-slate-50 to-transparent opacity-50">
-                            </div>
-                            <img src="{{ $selectedProduct->image }}" alt="{{ $selectedProduct->name }}"
-                                class="relative z-10 w-full h-full object-contain drop-shadow-2xl group-hover:scale-110 transition-transform duration-700">
+                        <div class="space-y-6" x-data="{ activeImage: '{{ $selectedProduct->image }}' }">
+                            <div
+                                class="relative aspect-square rounded-[2.5rem] bg-white border border-slate-100 p-8 shadow-xl shadow-slate-200/50 flex items-center justify-center group overflow-hidden">
+                                <div
+                                    class="absolute inset-0 bg-gradient-to-tr from-slate-50 to-transparent opacity-50">
+                                </div>
+                                <img :src="activeImage" alt="{{ $selectedProduct->name }}"
+                                    class="relative z-10 w-full h-full object-contain drop-shadow-2xl group-hover:scale-110 transition-transform duration-700">
 
-                            <div class="absolute top-6 left-6 z-20">
-                                @if ($selectedProduct->stock > 0)
-                                    <div
-                                        class="flex items-center gap-2 px-4 py-2 bg-emerald-500 text-white rounded-2xl shadow-lg shadow-emerald-500/30">
-                                        <div class="w-2 h-2 bg-white rounded-full animate-pulse"></div>
-                                        <span class="text-[10px] font-black uppercase tracking-widest">En Stock</span>
-                                    </div>
-                                @else
-                                    <div
-                                        class="px-4 py-2 bg-red-500 text-white rounded-2xl shadow-lg shadow-red-500/30">
-                                        <span class="text-[10px] font-black uppercase tracking-widest">Agotado</span>
-                                    </div>
-                                @endif
+                                <div class="absolute top-6 left-6 z-20">
+                                    @if ($selectedProduct->stock > 0)
+                                        <div
+                                            class="flex items-center gap-2 px-4 py-2 bg-emerald-500 text-white rounded-2xl shadow-lg shadow-emerald-500/30">
+                                            <div class="w-2 h-2 bg-white rounded-full animate-pulse"></div>
+                                            <span class="text-[10px] font-black uppercase tracking-widest">En
+                                                Stock</span>
+                                        </div>
+                                    @else
+                                        <div
+                                            class="px-4 py-2 bg-red-500 text-white rounded-2xl shadow-lg shadow-red-500/30">
+                                            <span
+                                                class="text-[10px] font-black uppercase tracking-widest">Agotado</span>
+                                        </div>
+                                    @endif
+                                </div>
                             </div>
+
+                            {{-- Gallery Thumbnails --}}
+                            @if ($selectedProduct->gallery && count($selectedProduct->gallery) > 0)
+                                <div class="flex items-center gap-4 overflow-x-auto pb-4 px-1 scrollbar-hide">
+                                    <button @click="activeImage = '{{ $selectedProduct->image }}'"
+                                        class="w-20 h-20 rounded-2xl bg-white border-2 p-2 shrink-0 transition-all duration-300 overflow-hidden shadow-sm"
+                                        :class="activeImage === '{{ $selectedProduct->image }}' ?
+                                            'border-[#0a4d8c] shadow-lg scale-105' :
+                                            'border-slate-100 opacity-60 hover:opacity-100 hover:border-slate-200'">
+                                        <img src="{{ $selectedProduct->image }}"
+                                            class="w-full h-full object-contain">
+                                    </button>
+                                    @foreach ($selectedProduct->gallery as $img)
+                                        <button @click="activeImage = '{{ $img }}'"
+                                            class="w-20 h-20 rounded-2xl bg-white border-2 p-2 shrink-0 transition-all duration-300 overflow-hidden shadow-sm"
+                                            :class="activeImage === '{{ $img }}' ?
+                                                'border-[#0a4d8c] shadow-lg scale-105' :
+                                                'border-slate-100 opacity-60 hover:opacity-100 hover:border-slate-200'">
+                                            <img src="{{ $img }}" class="w-full h-full object-contain">
+                                        </button>
+                                    @endforeach
+                                </div>
+                            @endif
                         </div>
 
                         {{-- Info Side --}}
-                        <div class="flex flex-col h-full" x-data="{ quantity: {{ $selectedProduct->minOrder ?? 1 }}, unit: 'box', basePrice: {{ $selectedProduct->price }}, unitPrice: {{ $selectedProduct->unitPrice ?? 0 }}, unitLabel: '{{ $selectedProduct->unit }}', unitPriceLabel: '{{ $selectedProduct->unitPriceUnit ?? '' }}' }">
-                            <div class="mb-8">
+                        <div class="flex flex-col h-full" x-data="{ quantity: {{ $selectedProduct->minOrder ?? 1 }}, unit: '{{ $selectedProduct->price > 0 ? 'box' : 'unit' }}', basePrice: {{ $selectedProduct->price_with_igv }}, unitPrice: {{ $selectedProduct->unit_price_with_igv }}, unitLabel: '{{ $selectedProduct->unit }}', unitPriceLabel: '{{ $selectedProduct->unitPriceUnit ?? '' }}' }">
+                            <div class="mb-2">
                                 <span
                                     class="bg-[#0a4d8c]/5 text-[#0a4d8c] px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-[0.15em] mb-4 inline-block">{{ $selectedProduct->brand }}</span>
                                 <h2
@@ -797,18 +885,41 @@
                                 <p class="text-slate-500 text-[15px] font-sans leading-relaxed max-w-[440px]">
                                     {{ $selectedProduct->description }}</p>
 
-                                @if (isset($selectedProduct->tags) && count($selectedProduct->tags) > 0)
+                                @if (isset($selectedProduct->tags) && is_array($selectedProduct->tags) && count($selectedProduct->tags) > 0)
                                     <div class="flex flex-wrap gap-2 mt-6">
                                         @foreach ($selectedProduct->tags as $tag)
                                             <span
                                                 class="px-3 py-1 bg-slate-100 text-slate-400 rounded-lg text-[9px] font-black uppercase tracking-wider border border-slate-200/50">{{ $tag }}</span>
                                         @endforeach
                                     </div>
+                                @elseif(isset($selectedProduct->tags) && is_string($selectedProduct->tags) && strlen($selectedProduct->tags) > 0)
+                                    <div class="flex flex-wrap gap-2 mt-6">
+                                        @foreach (explode(',', $selectedProduct->tags) as $tag)
+                                            <span
+                                                class="px-3 py-1 bg-slate-100 text-slate-400 rounded-lg text-[9px] font-black uppercase tracking-wider border border-slate-200/50">{{ trim($tag) }}</span>
+                                        @endforeach
+                                    </div>
+                                @endif
+
+                                @if ($selectedProduct->technicalSheet)
+                                    <div class="mt-6">
+                                        <a href="{{ $selectedProduct->technicalSheet }}" target="_blank"
+                                            class="inline-flex items-center gap-2.5 px-4 py-2.5 bg-slate-50 border border-slate-100 text-[#0a4d8c] rounded-2xl shadow-sm group/sheet hover:bg-[#0a4d8c] hover:text-white hover:border-[#0a4d8c] transition-all duration-300">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor"
+                                                viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                            </svg>
+                                            <span
+                                                class="text-[10px] font-black uppercase tracking-widest leading-none">Ficha
+                                                Técnica</span>
+                                        </a>
+                                    </div>
                                 @endif
                             </div>
 
                             {{-- Key Info Grid --}}
-                            <div class="grid grid-cols-2 gap-4 mb-10">
+                            <div class="grid grid-cols-2 gap-4 mb-4 mt-8">
                                 <div
                                     class="bg-slate-50 border border-slate-100 p-4 rounded-2xl flex items-center gap-4 group transition-colors hover:border-[#0a4d8c]/20">
                                     <div
@@ -821,15 +932,17 @@
                                     </div>
                                     <div class="min-w-0">
                                         <p class="text-[9px] uppercase font-black text-slate-400 tracking-[0.1em]">
-                                            Despacho hoy</p>
-                                        <p class="text-[12px] font-bold text-slate-700 truncate">Mañana,
-                                            {{ date('d M', strtotime('+1 day')) }}</p>
+                                            Entrega estimada</p>
+                                        <p class="text-[12px] font-bold text-slate-700 truncate">
+                                            {{ $selectedProduct->deliveryDays == 1 ? 'Mañana' : $selectedProduct->deliveryDays . ' Días' }}
+                                        </p>
                                     </div>
                                 </div>
+
                                 <div
                                     class="bg-slate-50 border border-slate-100 p-4 rounded-2xl flex items-center gap-4 group transition-colors hover:border-[#0a4d8c]/20">
                                     <div
-                                        class="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-sm text-[#0a4d8c]">
+                                        class="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-sm text-emerald-600">
                                         <svg class="w-5 h-5" fill="none" stroke="currentColor"
                                             viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -840,49 +953,67 @@
                                         <p class="text-[9px] uppercase font-black text-slate-400 tracking-[0.1em]">En
                                             Almacén</p>
                                         <p class="text-[12px] font-bold text-slate-700 truncate">
-                                            {{ $selectedProduct->stock }} {{ $selectedProduct->unit }}s</p>
+                                            {{ $selectedProduct->stock }} {{ $selectedProduct->unit ?? 'unid' }}</p>
                                     </div>
                                 </div>
                             </div>
 
                             {{-- Price & Selection Section --}}
-                            <div
-                                class="bg-slate-50/50 rounded-3xl p-6 border border-slate-100 mb-8 items-end flex justify-between gap-4">
-                                <div>
-                                    <p class="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-4">
-                                        Precio e Impuestos</p>
-                                    <div class="flex items-baseline gap-2">
-                                        <span
-                                            class="text-[2.2rem] font-black text-[#0a4d8c] font-montserrat tracking-tight leading-none">S/
-                                            <span
-                                                x-text="unit === 'unit' ? unitPrice.toFixed(2) : basePrice.toFixed(2)"></span></span>
-                                        <span class="text-[14px] text-slate-400 font-bold uppercase tracking-wider"
-                                            x-text="'/ ' + (unit === 'unit' ? unitPriceLabel : unitLabel)"></span>
-                                    </div>
-                                    <p class="text-[11px] text-slate-400 font-bold mt-1">Incluye IGV (18%)</p>
-                                </div>
-
-                                @if ($selectedProduct->unitPrice)
-                                    <div class="flex flex-col items-end whitespace-nowrap">
+                            <div class="bg-slate-50/80 rounded-[2.5rem] p-6 md:p-8 border border-slate-100 mb-8 mt-4">
+                                <div class="flex flex-col gap-8">
+                                    {{-- Price Display --}}
+                                    <div class="space-y-4">
                                         <p
-                                            class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">
-                                            Formato</p>
-                                        <div class="flex bg-white p-1 rounded-xl shadow-sm border border-slate-100">
-                                            <button @click="unit = 'unit'"
-                                                :class="unit === 'unit' ? 'bg-[#0a4d8c] text-white' :
-                                                    'text-slate-400 hover:text-slate-600'"
-                                                class="px-5 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all duration-300">
-                                                {{ $selectedProduct->unitPriceUnit }}
-                                            </button>
-                                            <button @click="unit = 'box'"
-                                                :class="unit === 'box' ? 'bg-[#0a4d8c] text-white' :
-                                                    'text-slate-400 hover:text-slate-600'"
-                                                class="px-5 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all duration-300">
-                                                {{ $selectedProduct->unit }}
-                                            </button>
+                                            class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] leading-none opacity-70">
+                                            Precio e Impuestos</p>
+                                        <div class="flex flex-wrap items-baseline gap-x-3 gap-y-2">
+                                            <div
+                                                class="flex items-baseline text-[#0a4d8c] font-montserrat tracking-tight leading-none">
+                                                <span class="text-2xl md:text-3xl font-black mr-1 opacity-80">S/</span>
+                                                <span class="text-4xl md:text-5xl lg:text-6xl font-black"
+                                                    x-text="unit === 'unit' ? unitPrice.toFixed(2) : basePrice.toFixed(2)"></span>
+                                            </div>
+                                            <span class="text-[15px] text-slate-400 font-bold uppercase tracking-wider"
+                                                x-text="'/ ' + (unit === 'unit' ? unitPriceLabel : unitLabel)"></span>
+                                        </div>
+                                        <div
+                                            class="flex items-center gap-2 text-emerald-600 bg-emerald-50 w-fit px-3 py-1 rounded-full border border-emerald-100/50">
+                                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                                <path fill-rule="evenodd"
+                                                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                                                    clip-rule="evenodd" />
+                                            </svg>
+                                            <span class="text-[10px] font-black uppercase tracking-widest">Incluye IGV
+                                                (18%)</span>
                                         </div>
                                     </div>
-                                @endif
+
+                                    {{-- Format Selection (Only if both prices exist) --}}
+                                    @if ($selectedProduct->price > 0 && $selectedProduct->unitPrice > 0)
+                                        <div class="pt-6 border-t border-slate-200/50">
+                                            <p
+                                                class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">
+                                                Seleccionar Formato</p>
+                                            <div
+                                                class="flex bg-white p-1.5 rounded-[1.5rem] shadow-sm border border-slate-200/50 w-full sm:w-fit">
+                                                <button @click="unit = 'unit'"
+                                                    :class="unit === 'unit' ?
+                                                        'bg-[#0a4d8c] text-white shadow-xl shadow-blue-900/20' :
+                                                        'text-slate-400 hover:text-slate-600 hover:bg-slate-50'"
+                                                    class="flex-1 sm:flex-none px-8 py-3 rounded-2xl text-[11px] font-black uppercase tracking-widest transition-all duration-300">
+                                                    {{ $selectedProduct->unitPriceUnit }}
+                                                </button>
+                                                <button @click="unit = 'box'"
+                                                    :class="unit === 'box' ?
+                                                        'bg-[#0a4d8c] text-white shadow-xl shadow-blue-900/20' :
+                                                        'text-slate-400 hover:text-slate-600 hover:bg-slate-50'"
+                                                    class="flex-1 sm:flex-none px-8 py-3 rounded-2xl text-[11px] font-black uppercase tracking-widest transition-all duration-300">
+                                                    {{ $selectedProduct->unit }}
+                                                </button>
+                                            </div>
+                                        </div>
+                                    @endif
+                                </div>
                             </div>
 
                             {{-- Actions --}}
@@ -949,8 +1080,9 @@
                                                 <h4 class="text-[13px] font-bold text-slate-800 truncate mb-1">
                                                     {{ $p->name }}</h4>
                                                 <p class="text-[#0a4d8c] font-montserrat font-black text-[14px]">S/
-                                                    {{ number_format($p->price, 2) }} <span
-                                                        class="text-[10px] text-slate-400 font-bold uppercase ml-1">/{{ $p->unit }}</span>
+                                                    {{ number_format($p->price > 0 ? $p->price_with_igv : $p->unit_price_with_igv, 2) }}
+                                                    <span
+                                                        class="text-[10px] text-slate-400 font-bold uppercase ml-1">/{{ $p->price > 0 ? $p->unit : $p->unitPriceUnit }}</span>
                                                 </p>
                                             </div>
                                         </div>

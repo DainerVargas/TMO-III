@@ -97,10 +97,10 @@
                     </h3>
                 </div>
                 <div class="relative">
-                    <select
-                        class="appearance-none bg-[#f8fafc] border border-[#f1f5f9] px-4 py-2 rounded-xl text-[12px] font-bold text-[#64748b] pr-10 outline-none focus:ring-4 focus:ring-[#0a4d8c]/5 font-sans">
-                        <option>Últimos 7 días</option>
-                        <option>Último mes</option>
+                    <select wire:model.live="period"
+                        class="appearance-none bg-[#f8fafc] border border-[#f1f5f9] px-4 py-2 rounded-xl text-[12px] font-bold text-[#64748b] pr-10 outline-none focus:ring-4 focus:ring-[#0a4d8c]/5 font-sans cursor-pointer transition-all hover:border-[#0a4d8c]/20">
+                        <option value="7days">Últimos 7 días</option>
+                        <option value="month">Último mes</option>
                     </select>
                     <div class="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -114,8 +114,9 @@
                 $maxTotal = $salesData->max('total') ?: 100;
                 $maxTotal = ceil($maxTotal / 100) * 100;
                 $points = [];
+                $count = count($salesData);
                 foreach ($salesData as $index => $data) {
-                    $x = $index * (800 / 6);
+                    $x = $index * (800 / ($count - 1));
                     $y = 260 - ($data['total'] / $maxTotal) * 220;
                     $points[] = "$x,$y";
                 }
@@ -157,10 +158,12 @@
 
                 {{-- X-axis labels --}}
                 <div class="absolute bottom-0 left-0 w-full flex justify-between px-2 pt-4">
-                    @foreach ($salesData as $data)
-                        <span class="text-[11px] font-bold text-slate-400 font-sans uppercase">
-                            {{ $data['label'] }}
-                        </span>
+                    @foreach ($salesData as $index => $data)
+                        @if ($period === '7days' || $index % 5 === 0 || $index === $count - 1)
+                            <span class="text-[11px] font-bold text-slate-400 font-sans uppercase">
+                                {{ $data['label'] }}
+                            </span>
+                        @endif
                     @endforeach
                 </div>
             </div>

@@ -13,6 +13,13 @@ class Navigation extends Component
     public $cartCount = 0;
     public $mobileMenuOpen = false;
 
+    protected $queryString = ['searchQuery'];
+
+    public function updatedSearchQuery()
+    {
+        $this->dispatch('search-updated', query: $this->searchQuery);
+    }
+
     public function mount()
     {
         // Cart count logic will go here
