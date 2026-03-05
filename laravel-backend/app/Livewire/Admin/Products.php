@@ -26,6 +26,9 @@ class Products extends Component
     public $newImage;
     public $newGallery = [];
     public $existingGallery = [];
+    public $importFile;
+    public $importResults = null;
+    public $isImportSummaryOpen = false;
 
     protected $queryString = ['search', 'category', 'stockStatus', 'activeFilter'];
 
@@ -43,6 +46,225 @@ class Products extends Component
     }
     public function updatedActiveFilter()
     {
+        $this->resetPage();
+    }
+
+    public function export()
+    {
+        $products = Product::with('category')->get();
+        $filename = 'inventario_productos_' . now()->format('Y-m-d_H-i-s') . '.csv';
+
+        return response()->streamDownload(function () use ($products) {
+            $handle = fopen('php://output', 'w');
+
+            // UTF-8 BOM for Excel visibility
+            fputs($handle, chr(0xEF) . chr(0xBB) . chr(0xBF));
+
+            // Header
+            fputcsv($handle, [
+                'ID',
+                'Nombre',
+                'SKU',
+                'Categoría',
+                'Marca',
+                'Precio Paquete',
+                'Unidad Paquete',
+                'Precio Unitario',
+                'Unidad Individual',
+                'Stock',
+                'Estado Stock',
+                'Días de Entrega',
+                'Activo',
+                'Tags',
+                'Creado'
+            ], ';');
+
+            foreach ($products as $p) {
+                fputcsv($handle, [
+                    $p->id,
+                    $p->name,
+                    $p->sku,
+                    $p->category->name ?? 'Sin categoría',
+                    $p->brand,
+                    $p->price,
+                    $p->unit,
+                    $p->unitPrice,
+                    $p->unitPriceUnit,
+                    $p->stock,
+                    $p->stockStatus,
+                    $p->deliveryDays,
+                    $p->isActive ? 'SI' : 'NO',
+                    is_array($p->tags) ? implode(', ', $p->tags) : $p->tags,
+                    $p->createdAt
+                ], ';');
+            }
+
+            fclose($handle);
+        }, $filename);
+    }
+
+    public function updatedImportFile()
+    {
+        $this->import();
+    }
+
+    public function import()
+    {
+        $this->validate([
+            'importFile' => 'required|mimes:csv,txt|max:10240',
+        ], [
+            'importFile.required' => 'Debes seleccionar un archivo.',
+            'importFile.mimes' => 'El archivo debe ser un CSV.',
+        ]);
+
+        $path = $this->importFile->getRealPath();
+        $handle = fopen($path, 'r');
+
+        // Detect delimiter
+        $firstLine = fgets($handle);
+        $semicolons = substr_count($firstLine, ';');
+        $commas = substr_count($firstLine, ',');
+        $delimiter = $semicolons >= $commas ? ';' : ',';
+
+        rewind($handle);
+        // Skip UTF-8 BOM if present
+        $bom = fread($handle, 3);
+        if ($bom !== "\xEF\xBB\xBF") {
+            rewind($handle);
+        }
+
+        // Get header
+        $header = fgetcsv($handle, 0, $delimiter);
+        if (!$header) {
+            $this->dispatch('notify', message: 'Archivo CSV vacío o inválido', type: 'error');
+            return;
+        }
+
+        // Clean headers (trim, lowercase, remove accents for better matching)
+        $cleanHeaders = array_map(function ($h) {
+            $h = trim(strtolower($h));
+            $h = str_replace(['á', 'é', 'í', 'ó', 'ú'], ['a', 'e', 'i', 'o', 'u'], $h);
+            return $h;
+        }, $header);
+
+        $imported = 0;
+        $updated = 0;
+        $errors = [];
+
+        // Fallback category
+        $defaultCategory = Category::first();
+
+        while (($row = fgetcsv($handle, 0, $delimiter)) !== false) {
+            if (count($row) < 2) continue;
+
+            $data = [];
+            foreach ($cleanHeaders as $index => $key) {
+                if (isset($row[$index])) {
+                    $data[$key] = $row[$index];
+                }
+            }
+
+            // Map keys with flexibility
+            $sku = $data['sku'] ?? null;
+            $name = $data['nombre'] ?? null;
+
+            if (!$sku && !$name) {
+                $errors[] = "Fila vacía: No se encontró Nombre ni SKU.";
+                continue;
+            }
+
+            $product = null;
+            if ($sku) {
+                $product = Product::where('sku', $sku)->first();
+            }
+            if (!$product && $name) {
+                $product = Product::where('name', $name)->first();
+            }
+
+            // Find category
+            $categoryName = $data['categoria'] ?? null;
+            $categoryId = null;
+            if ($categoryName) {
+                $cat = Category::where('name', 'like', '%' . trim($categoryName) . '%')->first();
+                if ($cat) {
+                    $categoryId = $cat->id;
+                }
+            }
+
+            // If still no category, use default or the first one available
+            if (!$categoryId) {
+                $categoryId = $product ? $product->categoryId : ($defaultCategory ? $defaultCategory->id : null);
+            }
+
+            if (!$categoryId) {
+                $errors[] = "Producto '" . ($name ?? $sku) . "': Categoría '" . ($categoryName ?? 'vacía') . "' no existe y no hay una por defecto.";
+                continue;
+            }
+
+            $isActiveStr = isset($data['activo']) ? strtoupper($data['activo']) : '';
+            $isActive = ($isActiveStr === 'SI' || $isActiveStr === 'S' || $isActiveStr === '1');
+
+            $stock = (int)($data['stock'] ?? 0);
+            $status = 'in-stock';
+            if ($stock == 0) $status = 'out-of-stock';
+            elseif ($stock <= 10) $status = 'low-stock';
+
+            // Partial matching for price headers if exact match fails
+            $pricePaquete = $data['precio paquete'] ?? $data['precio paque'] ?? null;
+            $unitPaquete = $data['unidad paquete'] ?? $data['unidad paque'] ?? 'UND';
+            $priceUnit = $data['precio unitario'] ?? $data['precio unitar'] ?? null;
+            $unitUnit = $data['unidad individual'] ?? $data['unidad indivi'] ?? 'UND';
+            $days = $data['dias de entrega'] ?? $data['dias de entre'] ?? 1;
+
+            $tagsRaw = $data['tags'] ?? '';
+            $tags = !empty($tagsRaw) ? array_filter(array_map('trim', explode(',', $tagsRaw))) : [];
+
+            $productData = [
+                'name' => $name,
+                'sku' => $sku,
+                'brand' => $data['marca'] ?? 'Genérico',
+                'price' => !empty($pricePaquete) ? (float)$pricePaquete : null,
+                'unit' => $unitPaquete,
+                'stock' => $stock,
+                'stockStatus' => $status,
+                'categoryId' => $categoryId,
+                'deliveryDays' => (int)$days,
+                'tags' => $tags,
+                'unitPrice' => !empty($priceUnit) ? (float)$priceUnit : null,
+                'unitPriceUnit' => $unitUnit,
+            ];
+
+            try {
+                if ($product) {
+                    $oldData = $product->toArray();
+                    $product->update($productData);
+                    if (isset($data['activo'])) {
+                        $product->isActive = $isActive;
+                        $product->save();
+                    }
+                    $this->logAction('UPDATE', 'Product', $product->id, $oldData, $product->fresh()->toArray());
+                    $updated++;
+                } else {
+                    $productData['isActive'] = false; // New products are always inactive
+                    $product = Product::create($productData);
+                    $this->logAction('CREATE', 'Product', $product->id, null, $product->toArray());
+                    $imported++;
+                }
+            } catch (\Exception $e) {
+                $errors[] = "Producto '" . ($name ?? $sku) . "': Error al guardar. " . $e->getMessage();
+            }
+        }
+
+        fclose($handle);
+        $this->importFile = null;
+
+        $this->importResults = [
+            'imported' => $imported,
+            'updated' => $updated,
+            'errors' => $errors
+        ];
+
+        $this->isImportSummaryOpen = true;
         $this->resetPage();
     }
 
