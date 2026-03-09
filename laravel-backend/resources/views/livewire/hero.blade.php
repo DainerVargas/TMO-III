@@ -42,16 +42,6 @@
                             d="M17 8l4 4m0 0l-4 4m4-4H3" />
                     </svg>
                 </button>
-                <a href="#"
-                    class="flex items-center gap-2 bg-white/15 hover:bg-white/25 text-white px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg border border-white/30 transition-all backdrop-blur-sm font-montserrat font-semibold text-[clamp(12px,2vw,14px)]">
-                    <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                        stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                    </svg>
-                    <span class="hidden sm:inline">Descargar Catálogo de Esenciales</span>
-                    <span class="sm:hidden">Catálogo</span>
-                </a>
             </div>
 
             {{-- Trust indicators --}}

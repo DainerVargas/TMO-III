@@ -15,9 +15,21 @@ class Profile extends Component
     public $name, $lastName, $email, $phone, $documentType, $documentNumber, $companyName;
     public $shippingAddress, $shippingDistrict, $shippingReference;
     public $current_password, $new_password, $new_password_confirmation;
+    public $activeTab = 'personal';
+    public $selectedOrder = null;
+    public $tab, $order;
+
+    protected $queryString = ['tab', 'order'];
 
     public function mount()
     {
+        if ($this->tab) {
+            $this->activeTab = $this->tab;
+        }
+        if ($this->order) {
+            $this->viewOrderDetails($this->order);
+        }
+
         $user = Auth::user();
         $this->name = $user->name;
         $this->lastName = $user->lastName;
@@ -29,6 +41,37 @@ class Profile extends Component
         $this->shippingAddress = $user->shippingAddress;
         $this->shippingDistrict = $user->shippingDistrict;
         $this->shippingReference = $user->shippingReference;
+    }
+
+    public function setTab($tab)
+    {
+        $this->activeTab = $tab;
+    }
+
+    public function getOrdersProperty()
+    {
+        return Auth::user()->orders()->with('orderItems.product')->latest()->get();
+    }
+
+    public function getNotificationsProperty()
+    {
+        return Auth::user()->notifications()->latest()->get();
+    }
+
+    public function viewOrderDetails($orderId)
+    {
+        $this->selectedOrder = Auth::user()->orders()->with('orderItems.product')->findOrFail($orderId);
+    }
+
+    public function closeOrderDetails()
+    {
+        $this->selectedOrder = null;
+    }
+
+    public function markAsRead($id)
+    {
+        $notification = Auth::user()->notifications()->findOrFail($id);
+        $notification->markAsRead();
     }
 
     public function updateProfile()

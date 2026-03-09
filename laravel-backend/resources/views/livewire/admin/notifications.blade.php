@@ -35,19 +35,35 @@
                 <div class="p-4 border-b border-slate-50 hover:bg-slate-50 transition-colors relative group {{ $notif->read_at ? 'opacity-60' : '' }}"
                     wire:key="notif-{{ $notif->id }}">
                     <div class="flex gap-3">
+                        @php
+                            $status = $notif->data['status'] ?? '';
+                            $colorClasses = match ($status) {
+                                'CONFIRMED', 'DELIVERED', 'COMPLETED' => 'bg-emerald-100 text-emerald-600',
+                                'SHIPPED' => 'bg-indigo-100 text-indigo-600',
+                                'PENDING', 'PROCESSING' => 'bg-amber-100 text-amber-600',
+                                'CANCELLED', 'DENIED', 'REJECTED' => 'bg-red-100 text-red-600',
+                                default => $notif->data['type'] === 'PENDING_ORDER'
+                                    ? 'bg-amber-100 text-amber-600'
+                                    : 'bg-blue-100 text-blue-600',
+                            };
+                            $iconPath = match ($status) {
+                                'CONFIRMED' => 'M5 13l4 4L19 7',
+                                'SHIPPED'
+                                    => 'M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0',
+                                'CANCELLED',
+                                'DENIED'
+                                    => 'M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z',
+                                default => $notif->data['type'] === 'PENDING_ORDER'
+                                    ? 'M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z'
+                                    : 'M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z',
+                            };
+                        @endphp
                         <div
-                            class="shrink-0 w-10 h-10 rounded-full flex items-center justify-center {{ $notif->data['type'] === 'PENDING_ORDER' ? 'bg-amber-100 text-amber-600' : 'bg-blue-100 text-blue-600' }}">
-                            @if ($notif->data['type'] === 'PENDING_ORDER')
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
-                                </svg>
-                            @else
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                </svg>
-                            @endif
+                            class="shrink-0 w-10 h-10 rounded-full flex items-center justify-center {{ $colorClasses }}">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="{{ $iconPath }}" />
+                            </svg>
                         </div>
                         <div class="flex-1 min-w-0">
                             <p class="text-[13px] font-bold text-slate-800 leading-snug">

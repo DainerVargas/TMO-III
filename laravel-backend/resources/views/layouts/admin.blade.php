@@ -4,7 +4,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Admin - {{ config('app.name', 'ComercioGuajiro') }}</title>
+    <title>Admin - {{ config('app.name', 'TMO') }}</title>
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -45,44 +45,78 @@
 
                 <nav class="flex-1 px-4 space-y-2 mt-2">
                     @php
-                        $menu = [
-                            ['label' => 'Dashboard', 'icon' => 'home', 'route' => 'admin.dashboard'],
-                            ['label' => 'Categorías', 'icon' => 'tag', 'route' => 'admin.categories'],
-                            ['label' => 'Productos', 'icon' => 'package', 'route' => 'admin.products'],
-                            ['label' => 'Pedidos', 'icon' => 'shopping-cart', 'route' => 'admin.orders'],
-                            ['label' => 'Usuarios', 'icon' => 'users', 'route' => 'admin.users'],
-                            ['label' => 'Inventario', 'icon' => 'archive', 'route' => 'admin.inventory'],
-                            ['label' => 'Logs/Auditoría', 'icon' => 'shieldcheck', 'route' => 'admin.audit'],
-                            ['label' => 'Mi Perfil', 'icon' => 'user', 'route' => 'admin.profile'],
-                            ['label' => 'Configuración', 'icon' => 'settings', 'route' => 'admin.settings'],
-                        ];
+                        $user = auth()->user();
+                        $role = strtoupper($user->role ?? '');
+
+                        if ($role === 'USER') {
+                            $menu = [
+                                [
+                                    'label' => 'Mi Información',
+                                    'icon' => 'user',
+                                    'route' => 'admin.profile',
+                                    'params' => ['tab' => 'personal'],
+                                ],
+                                [
+                                    'label' => 'Mis Compras',
+                                    'icon' => 'shopping-cart',
+                                    'route' => 'admin.profile',
+                                    'params' => ['tab' => 'compras'],
+                                ],
+                                [
+                                    'label' => 'Notificaciones',
+                                    'icon' => 'bell',
+                                    'route' => 'admin.profile',
+                                    'params' => ['tab' => 'notificaciones'],
+                                ],
+                                [
+                                    'label' => 'Seguridad',
+                                    'icon' => 'lock',
+                                    'route' => 'admin.profile',
+                                    'params' => ['tab' => 'seguridad'],
+                                ],
+                            ];
+                        } else {
+                            $menu = [
+                                ['label' => 'Dashboard', 'icon' => 'home', 'route' => 'admin.dashboard'],
+                                ['label' => 'Categorías', 'icon' => 'tag', 'route' => 'admin.categories'],
+                                ['label' => 'Productos', 'icon' => 'package', 'route' => 'admin.products'],
+                                ['label' => 'Pedidos', 'icon' => 'shopping-cart', 'route' => 'admin.orders'],
+                                ['label' => 'Usuarios', 'icon' => 'users', 'route' => 'admin.users'],
+                                ['label' => 'Inventario', 'icon' => 'archive', 'route' => 'admin.inventory'],
+                                ['label' => 'Logs/Auditoría', 'icon' => 'shieldcheck', 'route' => 'admin.audit'],
+                                ['label' => 'Mi Perfil', 'icon' => 'user', 'route' => 'admin.profile'],
+                                ['label' => 'Configuración', 'icon' => 'settings', 'route' => 'admin.settings'],
+                            ];
+                        }
                     @endphp
 
                     @foreach ($menu as $item)
                         @php
-                            $user = auth()->user();
                             $section = str_replace('admin.', '', $item['route']);
-                            $role = strtoupper($user->role ?? '');
+                            $isTabActive = isset($item['params']['tab']) && request('tab') == $item['params']['tab'];
+                            $isProfileFirstTime =
+                                !isset($item['params']['tab']) && $section === 'profile' && !request('tab');
+                            $isActive =
+                                request()->routeIs($item['route']) &&
+                                ($isTabActive || $isProfileFirstTime || !isset($item['params']['tab']));
 
-                            // Everyone can see Profile
-                            if ($section === 'profile') {
-                                $hasAccess = true;
-                            } elseif ($role === 'ADMIN') {
+                            if ($role === 'ADMIN') {
                                 $hasAccess = true;
                             } elseif ($role === 'MANAGER') {
-                                $hasAccess = in_array($section, (array) ($user->permissions ?? []));
+                                $hasAccess =
+                                    in_array($section, (array) ($user->permissions ?? [])) || $section === 'profile';
+                            } elseif ($role === 'USER') {
+                                $hasAccess = $section === 'profile';
                             } else {
                                 $hasAccess = false;
                             }
                         @endphp
 
                         @if ($hasAccess)
-                            <a href="{{ route($item['route']) }}"
-                                class="flex items-center gap-3 px-4 py-2 rounded-xl text-[14px] transition-all font-sans {{ request()->routeIs($item['route']) ? 'bg-[#f0f7ff] text-[#0a4d8c]' : 'text-slate-400 hover:bg-[#f8f9fb] hover:text-[#0a4d8c]' }}">
+                            <a href="{{ route($item['route'], $item['params'] ?? []) }}"
+                                class="flex items-center gap-3 px-4 py-2 rounded-xl text-[14px] transition-all font-sans {{ $isActive ? 'bg-[#f0f7ff] text-[#0a4d8c] font-bold' : 'text-slate-400 hover:bg-[#f8f9fb] hover:text-[#0a4d8c]' }}">
                                 @include('components.icons.' . $item['icon'], [
-                                    'class' =>
-                                        'w-5 h-5 ' .
-                                        (request()->routeIs($item['route']) ? 'text-[#0a4d8c]' : 'text-slate-300'),
+                                    'class' => 'w-5 h-5 ' . ($isActive ? 'text-[#0a4d8c]' : 'text-slate-300'),
                                 ])
                                 <span class="truncate">{{ $item['label'] }}</span>
                             </a>
@@ -122,7 +156,9 @@
                     </button>
 
                     {{-- Global Search --}}
-                    @livewire('admin.global-search')
+                    @if (auth()->user()->role !== 'USER')
+                        @livewire('admin.global-search')
+                    @endif
                 </div>
 
                 <div class="flex items-center gap-6">

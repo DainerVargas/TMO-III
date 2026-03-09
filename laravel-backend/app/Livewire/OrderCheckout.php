@@ -87,7 +87,10 @@ class OrderCheckout extends Component
         }
 
         $subtotal = collect($cart)->sum(fn($item) => $item['price'] * $item['quantity']);
-        $total = $subtotal * 1.18;
+        $igv = $subtotal * 0.18;
+        $tempTotal = $subtotal + $igv;
+        $shipping = $tempTotal < 150 ? 50 : 0;
+        $total = $tempTotal + $shipping;
 
         $text = "*Nuevo Pedido - TMO Suministros*\n\n";
         $text .= "*Cliente:* {$this->name} {$this->lastName}\n";
@@ -100,6 +103,16 @@ class OrderCheckout extends Component
         $text .= "*Productos:*\n";
         foreach ($cart as $item) {
             $text .= "- {$item['name']} (x{$item['quantity']}): S/ " . number_format($item['price'] * $item['quantity'], 2) . "\n";
+        }
+
+        if ($shipping > 0) {
+            $text .= "\n*Subtotal: S/ " . number_format($subtotal, 2) . "*";
+            $text .= "\n*IGV (18%): S/ " . number_format($igv, 2) . "*";
+            $text .= "\n*Envío: S/ " . number_format($shipping, 2) . "*";
+        } else {
+            $text .= "\n*Subtotal: S/ " . number_format($subtotal, 2) . "*";
+            $text .= "\n*IGV (18%): S/ " . number_format($igv, 2) . "*";
+            $text .= "\n*Envío: Gratis*";
         }
 
         $text .= "\n*Total a pagar: S/ " . number_format($total, 2) . "*";
@@ -129,7 +142,9 @@ class OrderCheckout extends Component
         try {
             $subtotal = collect($cart)->sum(fn($item) => $item['price'] * $item['quantity']);
             $igv = $subtotal * 0.18;
-            $total = $subtotal + $igv;
+            $tempTotal = $subtotal + $igv;
+            $shipping = $tempTotal < 150 ? 50 : 0;
+            $total = $tempTotal + $shipping;
 
             $order = Order::create([
                 'userId' => Auth::id(),

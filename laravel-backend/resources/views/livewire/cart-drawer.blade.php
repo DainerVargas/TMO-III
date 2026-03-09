@@ -137,7 +137,7 @@
                             d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                     <p class="text-[11px] text-emerald-700 font-sans font-bold uppercase tracking-wider">
-                        Envío gratis en pedidos mayores a S/ 200.00 en Lima
+                        Envío gratis en pedidos mayores a S/ 150.00 en Lima
                     </p>
                 </div>
 
@@ -150,6 +150,16 @@
                     <div class="flex items-center justify-between text-[13px] font-sans">
                         <span class="text-slate-400">IGV (18%)</span>
                         <span class="text-slate-700 font-bold">S/ {{ number_format($igv, 2) }}</span>
+                    </div>
+                    <div class="flex items-center justify-between text-[13px] font-sans">
+                        <span class="text-slate-400">Envío</span>
+                        <span class="text-slate-700 font-bold">
+                            @if ($shipping > 0)
+                                S/ {{ number_format($shipping, 2) }}
+                            @else
+                                <span class="text-emerald-600 uppercase">Gratis</span>
+                            @endif
+                        </span>
                     </div>
                     <div class="flex items-center justify-between pt-3 border-t border-slate-50">
                         <span

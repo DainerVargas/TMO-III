@@ -41,6 +41,11 @@ class Orders extends Component
         $order->status = strtoupper($newStatus);
         $order->save();
 
+        // Notify user
+        if ($order->user) {
+            $order->user->notify(new \App\Notifications\OrderStatusChanged($order));
+        }
+
         $this->logAction('UPDATE', 'Order', $id, $oldData, $order->fresh()->toArray());
         $this->dispatch('notify', message: 'Estado de pedido actualizado', type: 'success');
 

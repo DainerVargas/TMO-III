@@ -29,6 +29,12 @@ class Notifications extends Component
     public function goToOrder($notifId, $orderId)
     {
         $this->markAsRead($notifId);
+        $user = Auth::user();
+
+        if ($user->role === 'USER') {
+            return redirect()->route('admin.profile', ['tab' => 'compras', 'order' => $orderId]);
+        }
+
         return redirect()->route('admin.orders', ['search' => $orderId]);
     }
 

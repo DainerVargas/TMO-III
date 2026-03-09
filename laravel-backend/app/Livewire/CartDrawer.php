@@ -74,12 +74,15 @@ class CartDrawer extends Component
             return $item['price'] * $item['quantity'];
         });
         $igv = $subtotal * 0.18;
-        $total = $subtotal + $igv;
+        $tempTotal = $subtotal + $igv;
+        $shipping = $tempTotal < 150 ? 50 : 0;
+        $total = $tempTotal + $shipping;
 
         return view('livewire.cart-drawer', [
             'items' => $cart,
             'subtotal' => $subtotal,
             'igv' => $igv,
+            'shipping' => $shipping,
             'total' => $total,
             'totalItems' => collect($cart)->sum('quantity'),
         ]);

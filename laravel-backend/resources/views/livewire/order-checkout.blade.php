@@ -315,7 +315,9 @@
                                             fn($item) => $item['price'] * $item['quantity'],
                                         );
                                         $igv = $subtotal * 0.18;
-                                        $total = $subtotal + $igv;
+                                        $tempTotal = $subtotal + $igv;
+                                        $shipping = $tempTotal < 150 ? 50 : 0;
+                                        $total = $tempTotal + $shipping;
                                     @endphp
                                     <div class="flex justify-between items-center text-[12px]">
                                         <span class="text-slate-400 font-bold">Subtotal</span>
@@ -325,6 +327,16 @@
                                     <div class="flex justify-between items-center text-[12px]">
                                         <span class="text-slate-400 font-bold">IGV (18%)</span>
                                         <span class="text-slate-700 font-bold">S/ {{ number_format($igv, 2) }}</span>
+                                    </div>
+                                    <div class="flex justify-between items-center text-[12px]">
+                                        <span class="text-slate-400 font-bold">Envío</span>
+                                        <span class="text-slate-700 font-bold uppercase transition-all duration-300">
+                                            @if ($shipping > 0)
+                                                S/ {{ number_format($shipping, 2) }}
+                                            @else
+                                                <span class="text-emerald-600">Gratis</span>
+                                            @endif
+                                        </span>
                                     </div>
                                     <div class="flex justify-between items-center pt-2 mt-1 border-t border-slate-200">
                                         <span
